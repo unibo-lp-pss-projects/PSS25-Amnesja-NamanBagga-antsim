@@ -1,0 +1,57 @@
+package it.unibo.antsim.world;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class WorldTest {
+    private World world;
+    private static final int ROWS = 5;
+    private static final int COLS = 5;
+
+    @BeforeEach
+    void setUp(){
+        world = new World(ROWS, COLS, 10.0, 10.0);
+    }
+
+    @Test
+    void testNestRelocation(){
+        CellIndex firstNest = new CellIndex(2, 2);
+        CellIndex secondNest = new CellIndex(4, 4);
+
+        // Initial nest position
+        world.relocateNest(firstNest);
+        assertEquals(firstNest, world.getNestIndex());
+        assertInstanceOf(CellContent.Nest.class, world.getGrid().getCellAt(firstNest).getCellContent());
+
+        // Relocate nest to a new position
+        world.relocateNest(secondNest);
+        assertEquals(secondNest, world.getNestIndex());
+        assertInstanceOf(CellContent.Empty.class, world.getGrid().getCellAt(firstNest).getCellContent());
+        assertInstanceOf(CellContent.Nest.class, world.getGrid().getCellAt(secondNest).getCellContent());
+    }
+
+    @Test
+    void testGetWalkableNeighborsWithObstacles(){
+        CellIndex center = new CellIndex(2, 2);
+        CellIndex wall = new CellIndex(1, 2);
+
+        // place obstacle near the center
+        world.getGrid().getCellAt(wall).setCellContent(new CellContent.Obstacle());
+
+        List<CellIndex> neighbors = world.getWalkableNeighbors(center);
+
+        assertEquals(7, neighbors.size()); // There should be 7 walkable neighbors since one is blocked by the obstacle (3x3 grid)
+        assertFalse(neighbors.contains(wall), "The obstacle cell should not be in the walkable neighbors"); // The obstacle cell should not be in the walkable neighbors
+    }
+
+    @Test
+    void testPositionConversion(){
+        WorldPosition posInCenter = new WorldPosition(25.5, 14.2); // This should be in column 2 (20-30) and row 1 (10-20)
+        CellIndex expected = new CellIndex(1, 2);
+        assertEquals(expected, world.convertToCellIndex(posInCenter));
+    }
+}
