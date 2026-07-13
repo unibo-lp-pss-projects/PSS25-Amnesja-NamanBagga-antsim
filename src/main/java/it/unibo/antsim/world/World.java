@@ -109,4 +109,34 @@ public class World {
         return neighbors;
     }
 
+    /*
+    * This method verify if a position in the world is blocked by an obstacle or if it's out of boundries
+    */
+    public boolean isBlockedAt(WorldPosition pos){
+        int col = (int) (pos.x() / cellWidth);
+        int row = (int) (pos.y() / cellHeight);
+
+        // In case is out of boundries, it will be considered as blocked
+        if(row <= 0 || row >= grid.getRows() || col <= 0 || col >= grid.getColumns()){
+            return true;
+        }
+
+        return grid.getCellAt(new CellIndex(row, col)).getCellContent() instanceof CellContent.Obstacle;
+    }
+
+    /*
+    * This method verify if there is food at a given position in the world
+    */
+    public boolean isFoodAt(WorldPosition pos){
+        CellIndex index = convertToCellIndex(pos);
+        return grid.getCellAt(index).getCellContent() instanceof CellContent.Food;
+    }
+
+    /*
+    * This method verify if there is a nest at a given position in the world
+    */
+    public boolean isNestAt(WorldPosition pos){
+        CellIndex index = convertToCellIndex(pos);
+        return grid.getCellAt(index).getCellContent() instanceof CellContent.Nest;
+    }
 }

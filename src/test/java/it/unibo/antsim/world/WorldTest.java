@@ -54,4 +54,35 @@ class WorldTest {
         CellIndex expected = new CellIndex(1, 2);
         assertEquals(expected, world.convertToCellIndex(posInCenter));
     }
+
+    @Test
+    void testContinousSpaceQueries(){
+        CellIndex wall = new CellIndex(0, 0);
+        CellIndex food = new CellIndex(1, 1);
+        CellIndex nest = new CellIndex(3, 3);
+
+        world.getGrid().getCellAt(wall).setCellContent(new CellContent.Obstacle());
+        world.getGrid().getCellAt(food).setCellContent(new CellContent.Food(100));
+        world.relocateNest(nest);
+
+        // continous coordinates inide the cells (10x10)
+        WorldPosition wallPos = new WorldPosition(5.0, 5.0);
+        WorldPosition foodPos = new WorldPosition(15.0, 15.0);
+        WorldPosition nestPos = new WorldPosition(35.0, 35.0);
+        WorldPosition outsidePos = new WorldPosition(-5.0, 20.0);
+
+        // Verify isBlockedAt
+        assertTrue(world.isBlockedAt(wallPos));
+        assertFalse(world.isBlockedAt(foodPos));
+        assertTrue(world.isBlockedAt(outsidePos), "Out of bounds should be considered blocked"); // Out of bounds should be considered blocked
+
+        // Verify isFoodAt
+        assertTrue(world.isFoodAt(foodPos));
+        assertFalse(world.isFoodAt(wallPos));
+
+        // Verify isNestAt
+        assertTrue(world.isNestAt(nestPos));
+        assertFalse(world.isNestAt(foodPos));
+
+    }
 }
