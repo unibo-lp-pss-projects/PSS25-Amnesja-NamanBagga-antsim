@@ -2,6 +2,7 @@ package it.unibo.antsim.world;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /*
 * Main aggregate of the world module that bridges the discrete grid an continuous sppace.
@@ -138,5 +139,31 @@ public class World {
     public boolean isNestAt(WorldPosition pos){
         CellIndex index = convertToCellIndex(pos);
         return grid.getCellAt(index).getCellContent() instanceof CellContent.Nest;
+    }
+
+    /*
+    * This method searches a cell that contains food near the position in the world.
+    * Check the first cell of that pos, and if there isn't food it checks the other 8*/
+    public Optional<CellIndex> findFoodCellNear(WorldPosition pos){
+        CellIndex center = convertToCellIndex(pos);
+
+        // Check the cell where is the agent
+        if(grid.isInside(center) && grid.getCellAt(center).getCellContent() instanceof CellContent.Food){
+            return Optional.of(center);
+        }
+
+        // Check the neighbors (radius = 1):
+        for(int dRow=-1; dRow<=1; dRow++){
+            for(int dCol=-1; dCol<=1; dCol++){
+                if(dRow == 0 && dCol == 0){
+                    continue; // Skip the current cell
+                }
+                CellIndex neighborIndex = new CellIndex(center.row() + dRow, center.column() + dCol);
+                if(grid.isInside(neighborIndex) && grid.getCellAt(neighborIndex).getCellContent() instanceof CellContent.Food){
+                    return Optional.of(neighborIndex);
+                }
+            }
+        }
+        return Optional.empty();
     }
 }

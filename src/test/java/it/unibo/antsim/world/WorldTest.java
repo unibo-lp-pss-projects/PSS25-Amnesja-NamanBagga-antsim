@@ -83,6 +83,29 @@ class WorldTest {
         // Verify isNestAt
         assertTrue(world.isNestAt(nestPos));
         assertFalse(world.isNestAt(foodPos));
+    }
+
+    @Test
+    void testFindFoodCellNear(){
+        CellIndex current = new CellIndex(2, 2);
+        CellIndex adjacent = new CellIndex(2, 3);
+
+        WorldPosition agentPos = new WorldPosition(25.0, 25.0); // This corresponds to cell (2,2)
+
+        // Case 1: No food nearby
+        assertTrue(world.findFoodCellNear(agentPos).isEmpty());
+
+        // Case 2: Food in an adjacent cell
+        world.getGrid().setCellContent(adjacent, new CellContent.Food(50));
+        var foodNear = world.findFoodCellNear(agentPos);
+        assertTrue(foodNear.isPresent());
+        assertEquals(adjacent, foodNear.get());
+
+        // Case 3: Food in the same cell and the adjacent cell (the priority must be the current cell)
+        world.getGrid().setCellContent(current, new CellContent.Food(100));
+        var exactFoodPos = world.findFoodCellNear(agentPos);
+        assertTrue(exactFoodPos.isPresent());
+        assertEquals(current, exactFoodPos.get());
 
     }
 }
