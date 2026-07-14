@@ -32,7 +32,7 @@ public class PheromoneMap implements PheromoneField {
 
     @Override
     public void deposit(CellIndex index, PheromoneType type, double intensity){
-        if(index.row()<0 && index.row()<rows && index.column()<0 && index.column()<cols){
+        if(index.row()>=0 && index.row()<rows && index.column()>=0 && index.column()<cols){
             double[][] grid = (type==PheromoneType.HOME) ? homePheromones : foodPheromones;
             grid[index.row()][index.column()] = Math.min(maxSaturation, grid[index.row()][index.column()] + intensity);
         }
