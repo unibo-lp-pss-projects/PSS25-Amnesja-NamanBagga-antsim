@@ -6,8 +6,8 @@ import it.unibo.antsim.world.WorldPosition;
 import java.util.Objects;
 
 /*
-* This class is basically an ant in the simulation, whit continous coordinates and orientation
-*/
+ * This class is basically an ant in the simulation, whit continous coordinates and orientation
+ */
 public class Ant {
     private WorldPosition position;
     private double angle; // It rappresents the orientation in radiant
@@ -44,9 +44,9 @@ public class Ant {
     }
 
     /*
-    * This method manages the ant movement.
-    * If an ant goes forward to a obstacle, it bounce changing direction
-    */
+     * This method manages the ant movement.
+     * If an ant goes forward to a obstacle, it bounce changing direction
+     */
     public void move(double tick, World world){
         Objects.requireNonNull(world);
 
