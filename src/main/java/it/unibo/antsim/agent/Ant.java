@@ -58,7 +58,7 @@ public class Ant {
         // Collision controls
         if(!world.isBlockedAt(nextPos)){
             this.position = nextPos;
-        }{
+        }else{
             // In case it's a collision, in poor words we do a u-turn
             this.angle = normalizeAngle(this.angle + Math.PI + (Math.random() - 0.5));
         }
