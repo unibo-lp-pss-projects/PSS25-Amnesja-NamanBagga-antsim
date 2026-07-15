@@ -64,8 +64,28 @@ public class Ant {
         }
     }
 
+    /**
+     * Switches ant state after picking up food
+     */
+    public void pickFood(){
+        if(carryingFood){
+            throw new IllegalStateException("Ant is already carrying food");
+        }
+        carryingFood = true;
+        state = AntState.RETURNING_TO_NEST;
+    }
 
-
+    /**
+     * Switches ant state after dropping food at the nest?
+     */
+    public void dropFood(){
+        if(!carryingFood){
+            throw new IllegalStateException("Ant is not carrying food");
+        }
+        carryingFood = false;
+        state = AntState.WANDERING;
+    }
+    // This method normalizes the angle to be in the range [0, 2π)
     private double normalizeAngle(double ang){
         double normalized = ang%(2*Math.PI);
         if(normalized<0){

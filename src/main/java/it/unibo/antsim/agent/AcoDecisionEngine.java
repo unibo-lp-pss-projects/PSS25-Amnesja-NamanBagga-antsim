@@ -70,7 +70,8 @@ public class AcoDecisionEngine implements DecisionEngine {
         }
         // If all paths are blocked or the weight is zero, make a random choice to avoid deadlock
         if(totalweight <= 0.0){
-            return currentAngle + (random.nextDouble() - 0.5) * params.randomFactor();
+            double targetAngle = currentAngle + (random.nextDouble() - 0.5) * params.randomFactor();
+            return applyTurnStrength(currentAngle, targetAngle);
         }
 
         // Roulette wheel selection to choose on of the tree directions
@@ -81,9 +82,17 @@ public class AcoDecisionEngine implements DecisionEngine {
             if(roll<=cumulative){
                 // Add a small random noise to the chosen angle to make look the movement organic
                 double noise = (random.nextDouble() - 0.5) * params.randomFactor();
-                return candidates[i] + noise;
+                double targetAngle =  candidates[i] + noise;
+                return applyTurnStrength(currentAngle, targetAngle);
             }
         }
         return currentAngle;
+    }
+
+    private double applyTurnStrength(double currentAngle, double targetAngle){
+        double difference = Math.atan2(Math.sin(targetAngle - currentAngle), Math.cos(targetAngle - currentAngle));
+        double limitedDifference = Math.clamp(difference, -params.turnStrength(), params.turnStrength());
+
+        return currentAngle + limitedDifference;
     }
 }
