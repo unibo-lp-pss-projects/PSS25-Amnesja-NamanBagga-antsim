@@ -4,5 +4,5 @@ package it.unibo.antsim.pheromone;
 */
 public interface EvaporationModel {
     // It calculates the new level of pheromones based on the current level
-    double decay(double currentLevel);
+    double decay(double currentLevel, double dt);
 }

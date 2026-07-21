@@ -8,7 +8,10 @@ public record Evaporation(double decayRate) implements EvaporationModel {
     }
 
     @Override
-    public double decay(double currentLevel) {
-        return Math.max(0.0, currentLevel - decayRate);
+    public double decay(double currentLevel, double dt) {
+        if(dt<0){
+            throw new IllegalArgumentException("Time delta must be positive!");
+        }
+        return Math.max(0.0, currentLevel - decayRate * dt);
     }
 }

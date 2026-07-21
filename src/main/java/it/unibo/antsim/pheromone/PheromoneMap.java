@@ -39,11 +39,11 @@ public class PheromoneMap implements PheromoneField {
     }
 
     @Override
-    public void evaporate(){
+    public void evaporate(double dt){
         for(int r=0; r<rows; r++){
             for(int c=0; c<cols; c++){
-                foodPheromones[r][c] = evaporationModel.decay(foodPheromones[r][c]);
-                homePheromones[r][c] = evaporationModel.decay(homePheromones[r][c]);
+                foodPheromones[r][c] = evaporationModel.decay(foodPheromones[r][c], dt);
+                homePheromones[r][c] = evaporationModel.decay(homePheromones[r][c], dt);
             }
         }
     }
