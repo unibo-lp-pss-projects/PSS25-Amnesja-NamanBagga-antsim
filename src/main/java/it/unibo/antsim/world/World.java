@@ -133,6 +133,17 @@ public class World {
         return grid.getCellAt(index).getCellContent() instanceof CellContent.Food;
     }
 
+    public boolean consumeFood(CellIndex index){
+        if(!grid.isInside(index)){
+            return false;
+        }
+        Cell cell = grid.getCellAt(index);
+        if(cell.getCellContent() instanceof CellContent.Food food && food.quantity()>0){
+            cell.consumeFood(1);
+            return true;
+        }
+        return false;
+    }
     /*
     * This method verify if there is a nest at a given position in the world
     */

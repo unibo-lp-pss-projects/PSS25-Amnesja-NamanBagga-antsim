@@ -1,8 +1,10 @@
 package it.unibo.antsim.simulation;
 
 import it.unibo.antsim.agent.Ant;
+import it.unibo.antsim.agent.AntState;
 import it.unibo.antsim.agent.DecisionEngine;
 import it.unibo.antsim.pheromone.PheromoneField;
+import it.unibo.antsim.world.CellIndex;
 import it.unibo.antsim.world.World;
 
 import java.util.*;
@@ -62,6 +64,9 @@ public class SimulationEngine {
         // Agent decision and physical movements
         updateAgents(dt);
 
+        // food pickup
+        foodPickup();
+
         // Pheromone evaporation
         updateEnvironment(dt);
 
@@ -108,6 +113,18 @@ public class SimulationEngine {
         return Collections.unmodifiableList(ants);
     }
 
+    /**
+     * Interaction between wandering ants and food source
+     * basically ants near food collect and switch their stare to RETURNING_TO_NEST
+     */
+    public void foodPickup(){
+        for(Ant ant : ants){
+            if(ant.getState()!=AntState.WANDERING){
+                continue;
+            }
 
+            world.findFoodCellNear(ant.getPosition()).filter(world::consumeFood).ifPresent(ignored->ant.pickFood());
+        }
+    }
 
 }
