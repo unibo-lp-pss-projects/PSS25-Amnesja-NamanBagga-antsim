@@ -4,8 +4,8 @@ import it.unibo.antsim.agent.Ant;
 import it.unibo.antsim.agent.AntState;
 import it.unibo.antsim.agent.DecisionEngine;
 import it.unibo.antsim.pheromone.PheromoneField;
-import it.unibo.antsim.world.CellIndex;
 import it.unibo.antsim.world.World;
+import it.unibo.antsim.world.WorldPosition;
 
 import java.util.*;
 
@@ -20,6 +20,9 @@ public class SimulationEngine {
     private final PheromoneField pheromoneField;
     private final DecisionEngine decisionEngine;
     private final List<Ant> ants;
+    private static final double PHEROMONE_DEPOSIT_CONSTANT = 100.0;
+    private static final double MIN_TRIP_LENGTH = 1.0;
+    private final Map<Ant, Double> returnTripLength;
 
     public SimulationEngine(World world, PheromoneField pheromoneField, DecisionEngine decisionEngine){
         this.clock = new SimulationClock();
@@ -29,6 +32,7 @@ public class SimulationEngine {
         this.pheromoneField = Objects.requireNonNull(pheromoneField);
         this.decisionEngine = Objects.requireNonNull(decisionEngine);
         this.ants = new ArrayList<>();
+        this.returnTripLength = new IdentityHashMap<>();
     }
 
     public void start(){
@@ -64,8 +68,11 @@ public class SimulationEngine {
         // Agent decision and physical movements
         updateAgents(dt);
 
-        // food pickup
+        // Food pickup
         foodPickup();
+
+        // Food delivery to nest
+        nestDelivery();
 
         // Pheromone evaporation
         updateEnvironment(dt);
@@ -76,11 +83,22 @@ public class SimulationEngine {
 
     private void updateAgents(double dt){
         for(Ant ant : ants){
-            // Decision
+            WorldPosition prevPos = ant.getPosition();
+            boolean returningToNest = ant.getState() == AntState.RETURNING_TO_NEST;
+
             double nextAngle = decisionEngine.decideNextAngle(ant, world, pheromoneField);
             ant.setAngle(nextAngle);
-
             ant.move(dt, world);
+
+            if(returningToNest){
+                WorldPosition currentPos = ant.getPosition();
+                double distanceMoved = Math.hypot(
+                        currentPos.x() - prevPos.x(),
+                        currentPos.y() - prevPos.y()
+                );
+
+                returnTripLength.merge(ant, distanceMoved, Double::sum);
+            }
         }
     }
 
@@ -96,7 +114,7 @@ public class SimulationEngine {
         return clock;
     }
 
-    public SimulationStatistics getStats(int activeAnts){
+    public SimulationStatistics getStats(){
         return new SimulationStatistics(
                 clock.getCurrentStep(),
                 clock.getTotalTime(),
@@ -123,7 +141,27 @@ public class SimulationEngine {
                 continue;
             }
 
-            world.findFoodCellNear(ant.getPosition()).filter(world::consumeFood).ifPresent(ignored->ant.pickFood());
+            world.findFoodCellNear(ant.getPosition()).filter(world::consumeFood).ifPresent(ignored->{
+                ant.pickFood();
+                returnTripLength.put(ant, 0.0);
+            });
+        }
+    }
+
+    public void nestDelivery(){
+        for(Ant ant : ants){
+            if(ant.getState()!=AntState.RETURNING_TO_NEST || !world.isNestAt(ant.getPosition())){
+                continue;
+            }
+
+            double tripLength = Math.max(MIN_TRIP_LENGTH, returnTripLength.getOrDefault(ant, 0.0));
+            double depositAmount = PHEROMONE_DEPOSIT_CONSTANT/tripLength;
+
+            pheromoneField.deposit(world.getNestIndex(), PheromoneField.PheromoneType.FOOD, depositAmount);
+
+            foodCollected++;
+            ant.dropFood();
+            returnTripLength.remove(ant);
         }
     }
 
