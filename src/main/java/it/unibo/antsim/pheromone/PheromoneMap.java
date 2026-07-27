@@ -3,6 +3,7 @@ package it.unibo.antsim.pheromone;
 import it.unibo.antsim.world.CellIndex;
 import it.unibo.antsim.world.WorldPosition;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 public class PheromoneMap implements PheromoneField {
@@ -45,6 +46,14 @@ public class PheromoneMap implements PheromoneField {
                 foodPheromones[r][c] = evaporationModel.decay(foodPheromones[r][c], dt);
                 homePheromones[r][c] = evaporationModel.decay(homePheromones[r][c], dt);
             }
+        }
+    }
+
+    @Override
+    public void clear(){
+        for(int row=0; row<rows; row++){
+            Arrays.fill(foodPheromones[row], 0.0);
+            Arrays.fill(homePheromones[row], 0.0);
         }
     }
 

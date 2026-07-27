@@ -2,9 +2,12 @@ package it.unibo.antsim.simulation;
 
 import it.unibo.antsim.agent.AcoDecisionEngine;
 import it.unibo.antsim.agent.AcoParameters;
+import it.unibo.antsim.agent.AntFactory;
 import it.unibo.antsim.pheromone.Evaporation;
 import it.unibo.antsim.pheromone.PheromoneMap;
 import it.unibo.antsim.world.World;
+import it.unibo.antsim.world.generation.GenerationParameters;
+import it.unibo.antsim.world.generation.WorldGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +27,10 @@ public class SimulationEngineLifecycleTest {
                 new AcoDecisionEngine(
                         new AcoParameters(1.0, 1.0, 5.0, Math.PI/4, 0.0, 1.0),
                         new Random(42)
-                ));
+                ),
+                new AntFactory(1.0, new Random(42)),
+                new WorldGenerator(new Random(42)),
+                new GenerationParameters(10, 10, 10.0, 10.0, 0.0, 0, 0, 10, 1));
     }
 
     @Test
