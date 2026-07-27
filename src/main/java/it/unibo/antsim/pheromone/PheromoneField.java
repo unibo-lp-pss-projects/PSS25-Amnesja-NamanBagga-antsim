@@ -22,5 +22,7 @@ public interface PheromoneField {
     /*
     * This method manages the evaporation of pheromones
     */
-    void evaporate();
+    void evaporate(double dt);
+
+    void clear();
 }
