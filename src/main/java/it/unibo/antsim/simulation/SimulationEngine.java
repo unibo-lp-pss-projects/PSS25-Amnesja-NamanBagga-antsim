@@ -5,6 +5,7 @@ import it.unibo.antsim.agent.AntFactory;
 import it.unibo.antsim.agent.AntState;
 import it.unibo.antsim.agent.DecisionEngine;
 import it.unibo.antsim.pheromone.PheromoneField;
+import it.unibo.antsim.world.Cell;
 import it.unibo.antsim.world.CellIndex;
 import it.unibo.antsim.world.World;
 import it.unibo.antsim.world.WorldPosition;
@@ -27,7 +28,9 @@ public class SimulationEngine {
     private final DecisionEngine decisionEngine;
     private final List<Ant> ants;
     private final AntFactory antFactory;
-    private static final double PHEROMONE_DEPOSIT_CONSTANT = 100.0;
+    private static final double PHEROMONE_Q = 100.0;
+    private static final double PHEROMONE_HOME_DEPOSIT_RATE = 0.1;
+    private static final double PHEROMONE_FOOD_DEPOSIT_RATE = 0.1;
     private static final double MIN_TRIP_LENGTH = 1.0;
     private final Map<Ant, Double> returnTripLength;
     private final Map<Ant, List<CellIndex>> returnPath;
@@ -105,22 +108,30 @@ public class SimulationEngine {
             ant.setAngle(nextAngle);
             ant.move(dt, world);
 
+            final CellIndex currentCell = world.convertToCellIndex(ant.getPosition());
+
             if(returningToNest){
-                WorldPosition currentPos = ant.getPosition();
-                double distanceMoved = Math.hypot(
+                pheromoneField.deposit(currentCell, PheromoneField.PheromoneType.FOOD, PHEROMONE_FOOD_DEPOSIT_RATE*dt);
+
+                final WorldPosition currentPos = ant.getPosition();
+                final double distanceMoved = Math.hypot(
                         currentPos.x() - prevPos.x(),
                         currentPos.y() - prevPos.y()
                 );
+
                 List<CellIndex> path = returnPath.get(ant);
                 if(path==null){
                     path = new ArrayList<>();
                     returnPath.put(ant, path);
                 }
+
                 returnTripLength.merge(ant, distanceMoved, Double::sum);
-                CellIndex currentCell = world.convertToCellIndex(currentPos);
-                if(path.isEmpty() || !path.get(path.size()-1).equals(currentCell)){
+
+                if(path.isEmpty() || !path.get(path.size() - 1).equals(currentCell)){
                     path.add(currentCell);
                 }
+            }else{
+                pheromoneField.deposit(currentCell, PheromoneField.PheromoneType.HOME, PHEROMONE_HOME_DEPOSIT_RATE*dt);
             }
         }
     }
@@ -183,7 +194,7 @@ public class SimulationEngine {
             }
 
             double tripLength = Math.max(MIN_TRIP_LENGTH, returnTripLength.getOrDefault(ant, 0.0));
-            double depositAmount = PHEROMONE_DEPOSIT_CONSTANT/tripLength;
+            double depositAmount = PHEROMONE_Q/tripLength;
             List<CellIndex> path = returnPath.get(ant);
             if(path!=null && !path.isEmpty()){
                 double depositPerCell  =depositAmount/path.size();
@@ -195,7 +206,7 @@ public class SimulationEngine {
             ant.dropFood();
             returnTripLength.remove(ant);
             returnPath.remove(ant);
-            System.out.println("NEST_DELIVERY ant=" + ant.getPosition() + " state=" + ant.getState() + " trip=" + returnTripLength.get(ant));
+            System.out.println("NEST_DELIVERY ant=" + ant.getPosition() + " state=" + ant.getState() + " trip=" + tripLength);
         }
 
     }
