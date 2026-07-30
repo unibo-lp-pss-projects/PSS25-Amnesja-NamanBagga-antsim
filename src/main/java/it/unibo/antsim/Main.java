@@ -49,10 +49,10 @@ public class Main extends Application {
 
         final AcoParameters acoParameters = new AcoParameters(
                 1.0,
-                1.0,
-                18.0,
+                0.5,
+                30.0,
                 Math.PI/4.0,
-                Math.PI/3.0,
+                Math.PI/12.0,
                 Math.PI/5.0
         );
 

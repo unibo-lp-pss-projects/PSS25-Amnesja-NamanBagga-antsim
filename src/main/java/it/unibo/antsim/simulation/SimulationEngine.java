@@ -29,8 +29,8 @@ public class SimulationEngine {
     private final List<Ant> ants;
     private final AntFactory antFactory;
     private static final double PHEROMONE_Q = 100.0;
-    private static final double PHEROMONE_HOME_DEPOSIT_RATE = 0.1;
-    private static final double PHEROMONE_FOOD_DEPOSIT_RATE = 0.1;
+    private static final double PHEROMONE_HOME_DEPOSIT_RATE = 1.0;
+    private static final double PHEROMONE_FOOD_DEPOSIT_RATE = 1.0;
     private static final double MIN_TRIP_LENGTH = 1.0;
     private final Map<Ant, Double> returnTripLength;
     private final Map<Ant, List<CellIndex>> returnPath;
@@ -159,6 +159,10 @@ public class SimulationEngine {
                 ants.size(),
                 foodCollected
         );
+    }
+
+    public PheromoneField getPheromoneField() {
+        return pheromoneField;
     }
 
     public void addAnt(Ant ant){

@@ -118,7 +118,7 @@ public class World {
         int row = (int) (pos.y() / cellHeight);
 
         // In case is out of boundries, it will be considered as blocked
-        if(row <= 0 || row >= grid.getRows() || col <= 0 || col >= grid.getColumns()){
+        if(row < 0 || row >= grid.getRows() || col < 0 || col >= grid.getColumns()){
             return true;
         }
 

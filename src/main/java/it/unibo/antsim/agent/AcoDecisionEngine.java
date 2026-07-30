@@ -29,7 +29,7 @@ public class AcoDecisionEngine implements DecisionEngine {
         Objects.requireNonNull(pheromoneField, "Pheromone field cannot be null");
 
         // Determine which pheromone type the ant is sensitive in current state
-        PheromoneField.PheromoneType target = (ant.getState() == AntState.RETURNING_TO_NEST) ? PheromoneField.PheromoneType.HOME : PheromoneField.PheromoneType.FOOD;
+        PheromoneField.PheromoneType target = (ant.getState() == AntState.RETURNING_TO_NEST) ? PheromoneField.PheromoneType.FOOD : PheromoneField.PheromoneType.HOME;
 
         // Define 3 candidates of the current angole
         double currentAngle = ant.getAngle();
@@ -62,7 +62,7 @@ public class AcoDecisionEngine implements DecisionEngine {
             double pheromoneWeight = Math.pow(pheromone + EPSILON, params.alpha());
 
             // Directional heuristic weight, ants prefer to move forward (higher weight in the center)
-            double heuristic = (i==0) ? 1.0 : 0.5;
+            double heuristic = (i==0) ? 1.0 : 0.8;
             double heuristicWeight = Math.pow(heuristic, params.beta());
 
             weights[i] = pheromoneWeight * heuristicWeight;
