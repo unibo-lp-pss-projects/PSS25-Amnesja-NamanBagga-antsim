@@ -62,7 +62,7 @@ public class WorldGenerator {
     }
 
     private void generateFoodClusters(World world, CellIndex nestIndex, GenerationParameters params) {
-        for (int i = 0; i <= params.numFoodClusters(); i++) {
+        for (int i = 0; i < params.numFoodClusters(); i++) {
             int startRow = random.nextInt(params.rows());
             int startCol = random.nextInt(params.cols());
             CellIndex center = new CellIndex(startRow, startCol);

@@ -1,16 +1,13 @@
 package it.unibo.antsim.simulation;
 
-import it.unibo.antsim.agent.Ant;
-import it.unibo.antsim.agent.AntFactory;
-import it.unibo.antsim.agent.AntState;
-import it.unibo.antsim.agent.DecisionEngine;
+import it.unibo.antsim.agent.*;
 import it.unibo.antsim.pheromone.PheromoneField;
-import it.unibo.antsim.world.Cell;
 import it.unibo.antsim.world.CellIndex;
 import it.unibo.antsim.world.World;
 import it.unibo.antsim.world.WorldPosition;
 import it.unibo.antsim.world.generation.GenerationParameters;
 import it.unibo.antsim.world.generation.WorldGenerator;
+import javafx.scene.control.Cell;
 
 import java.util.*;
 
@@ -26,14 +23,16 @@ public class SimulationEngine {
     private final GenerationParameters generationParameters;
     private final PheromoneField pheromoneField;
     private final DecisionEngine decisionEngine;
-    private final List<Ant> ants;
+    private final AntGroup antGroup;
     private final AntFactory antFactory;
-    private static final double PHEROMONE_Q = 100.0;
-    private static final double PHEROMONE_HOME_DEPOSIT_RATE = 0.1;
-    private static final double PHEROMONE_FOOD_DEPOSIT_RATE = 0.1;
+    private static final double PHEROMONE_Q = 150.0;
+    private static final double PHEROMONE_HOME_DEPOSIT_RATE = 0.0;
+    private static final double PHEROMONE_FOOD_DEPOSIT_RATE = 2.0;
     private static final double MIN_TRIP_LENGTH = 1.0;
     private final Map<Ant, Double> returnTripLength;
     private final Map<Ant, List<CellIndex>> returnPath;
+    private final Map<Ant, List<CellIndex>> outboundPath;
+    private final Map<Ant, Integer> returnCursor;
 
     public SimulationEngine(World world, PheromoneField pheromoneField, DecisionEngine decisionEngine, AntFactory antFactory, WorldGenerator worldGenerator, GenerationParameters generationParameters){
         this.clock = new SimulationClock();
@@ -44,10 +43,12 @@ public class SimulationEngine {
         this.generationParameters = Objects.requireNonNull(generationParameters);
         this.pheromoneField = Objects.requireNonNull(pheromoneField);
         this.decisionEngine = Objects.requireNonNull(decisionEngine);
-        this.ants = new ArrayList<>();
+        this.antGroup = new AntGroup();
         this.antFactory = Objects.requireNonNull(antFactory);
         this.returnTripLength = new IdentityHashMap<>();
         this.returnPath = new IdentityHashMap<>();
+        this.outboundPath = new IdentityHashMap<>();
+        this.returnCursor = new IdentityHashMap<>();
     }
 
     public void start(){
@@ -80,9 +81,11 @@ public class SimulationEngine {
         clock.reset();
         foodCollected = 0;
 
-        ants.clear();
+        antGroup.clear();
         returnTripLength.clear();
         returnPath.clear();
+        outboundPath.clear();
+        returnCursor.clear();
 
         world  =worldGenerator.generate(generationParameters);
         pheromoneField.clear();
@@ -100,38 +103,35 @@ public class SimulationEngine {
     }
 
     private void updateAgents(double dt){
-        for(Ant ant : ants){
+        for(Ant ant : antGroup.getAnts()){
             WorldPosition prevPos = ant.getPosition();
             boolean returningToNest = ant.getState() == AntState.RETURNING_TO_NEST;
 
-            double nextAngle = decisionEngine.decideNextAngle(ant, world, pheromoneField);
-            ant.setAngle(nextAngle);
+            if(returningToNest){
+                ant.setAngle(returnAngle(ant, dt));
+            }else{
+                ant.setAngle(decisionEngine.decideNextAngle(ant, world, pheromoneField));
+            }
+
             ant.move(dt, world);
 
-            final CellIndex currentCell = world.convertToCellIndex(ant.getPosition());
+            CellIndex current = world.convertToCellIndex(ant.getPosition());
 
             if(returningToNest){
-                pheromoneField.deposit(currentCell, PheromoneField.PheromoneType.FOOD, PHEROMONE_FOOD_DEPOSIT_RATE*dt);
+                pheromoneField.deposit(current, PheromoneField.PheromoneType.FOOD, PHEROMONE_FOOD_DEPOSIT_RATE * dt);
 
-                final WorldPosition currentPos = ant.getPosition();
-                final double distanceMoved = Math.hypot(
-                        currentPos.x() - prevPos.x(),
-                        currentPos.y() - prevPos.y()
-                );
+                double movedDist = Math.hypot(ant.getPosition().x() - prevPos.x(), ant.getPosition().y() - prevPos.y());
 
-                List<CellIndex> path = returnPath.get(ant);
-                if(path==null){
-                    path = new ArrayList<>();
-                    returnPath.put(ant, path);
-                }
+                returnTripLength.merge(ant, movedDist, Double::sum);
 
-                returnTripLength.merge(ant, distanceMoved, Double::sum);
 
-                if(path.isEmpty() || !path.get(path.size() - 1).equals(currentCell)){
-                    path.add(currentCell);
+                List<CellIndex> path = returnPath.computeIfAbsent(ant, ignored -> new ArrayList<>());
+
+                if(path.isEmpty() || !path.get(path.size() - 1).equals(current)){
+                    path.add(current);
                 }
             }else{
-                pheromoneField.deposit(currentCell, PheromoneField.PheromoneType.HOME, PHEROMONE_HOME_DEPOSIT_RATE*dt);
+                recordOutboundCell(ant, current);
             }
         }
     }
@@ -156,17 +156,17 @@ public class SimulationEngine {
         return new SimulationStatistics(
                 clock.getCurrentStep(),
                 clock.getTotalTime(),
-                ants.size(),
+                antGroup.size(),
                 foodCollected
         );
     }
 
     public void addAnt(Ant ant){
-        this.ants.add(Objects.requireNonNull(ant));
+        this.antGroup.addAnt(Objects.requireNonNull(ant));
     }
 
     public List<Ant> getAnts() {
-        return Collections.unmodifiableList(ants);
+        return Collections.unmodifiableList(antGroup.getAnts());
     }
 
     /**
@@ -174,30 +174,32 @@ public class SimulationEngine {
      * basically ants near food collect and switch their stare to RETURNING_TO_NEST
      */
     public void foodPickup(){
-        for(Ant ant : ants){
+        for(Ant ant : antGroup.getAnts()){
             if(ant.getState()!=AntState.WANDERING){
                 continue;
             }
 
             world.findFoodCellNear(ant.getPosition()).filter(world::consumeFood).ifPresent(ignored->{
+                recordOutboundCell(ant, world.convertToCellIndex(ant.getPosition()));
                 ant.pickFood();
                 returnTripLength.put(ant, 0.0);
                 returnPath.put(ant, new ArrayList<>());
+                List<CellIndex> path = outboundPath.get(ant);
+                returnCursor.put(ant, path.size() - 1);
             });
         }
     }
 
     public void nestDelivery(){
-        for(Ant ant : ants){
+        for(Ant ant : antGroup.getAnts()){
             if(ant.getState()!=AntState.RETURNING_TO_NEST || !world.isNestAt(ant.getPosition())){
                 continue;
             }
 
             double tripLength = Math.max(MIN_TRIP_LENGTH, returnTripLength.getOrDefault(ant, 0.0));
-            double depositAmount = PHEROMONE_Q/tripLength;
             List<CellIndex> path = returnPath.get(ant);
             if(path!=null && !path.isEmpty()){
-                double depositPerCell  =depositAmount/path.size();
+                double depositPerCell = PHEROMONE_Q/ tripLength;
                 for(CellIndex cell:path){
                     pheromoneField.deposit(cell, PheromoneField.PheromoneType.FOOD, depositPerCell);
                 }
@@ -206,6 +208,8 @@ public class SimulationEngine {
             ant.dropFood();
             returnTripLength.remove(ant);
             returnPath.remove(ant);
+            outboundPath.remove(ant);
+            returnCursor.remove(ant);
             System.out.println("NEST_DELIVERY ant=" + ant.getPosition() + " state=" + ant.getState() + " trip=" + tripLength);
         }
 
@@ -225,13 +229,89 @@ public class SimulationEngine {
         double cellWidth = world.getWidth()/world.getColumns();
         double cellHeight = world.getHeight()/ world.getRows();
 
-        while(ants.size()<targetCount){
-            ants.add(antFactory.generateAntInNest(nestIndex, cellWidth, cellHeight));
+        while(antGroup.size()<targetCount){
+            antGroup.addAnt(antFactory.generateAntInNest(nestIndex, cellWidth, cellHeight));
         }
-        while(ants.size()>targetCount){
-            Ant removedAnt = ants.remove(ants.size() - 1);
+        while(antGroup.size()>targetCount){
+            Ant removedAnt = antGroup.removeLast();
             returnTripLength.remove(removedAnt);
             returnPath.remove(removedAnt);
         }
+    }
+
+    private List<CellIndex> getCellsBetween(CellIndex from, CellIndex to){
+        List<CellIndex> cells = new ArrayList<>();
+        int r0 = from.row();
+        int c0 = from.column();
+        int r1 = to.row();
+        int c1 = to.column();
+
+        int dr =Math.abs(r1 - r0);
+        int dc = Math.abs(c1 - c0);
+        int sr = r0 < r1 ? 1 : -1;
+        int sc = c0 < c1 ? 1 : -1;
+        int err = dr - dc;
+        int r = r0;
+        int c = c0;
+
+        while(true){
+            cells.add(new CellIndex(r, c));
+            if(r == r1 && c == c1){
+                break;
+            }
+            int e2 = 2 * err;
+            if(e2 > -dc) {
+                err -= dc;
+                r += sr;
+            }
+            if(e2 < dr){
+                err += dr;
+                c += sc;
+            }
+        }
+        return cells;
+    }
+
+    private void recordOutboundCell(Ant ant, CellIndex cell){
+        List<CellIndex> path = outboundPath.computeIfAbsent(ant, ignored -> new ArrayList<>());
+
+        int prevOccurence = path.lastIndexOf(cell);
+
+        if(prevOccurence >= 0){
+            path.subList(prevOccurence +1, path.size()).clear();
+        }else{
+            path.add(cell);
+        }
+    }
+
+    private double returnAngle(Ant ant, double dt){
+        List<CellIndex> path = outboundPath.get(ant);
+
+        if(path == null || path.isEmpty()){
+            return ant.getAngle();
+        }
+
+        int cursor = returnCursor.getOrDefault(ant, path.size() - 1);
+
+        double cellWidth = world.getWidth() / world.getColumns();
+        double cellHeight = world.getHeight() / world.getRows();
+        double reachDistance = ant.getSpeed() * dt * 1.1;
+        while(cursor >= 0){
+            CellIndex target = path.get(cursor);
+
+            WorldPosition targetPos = new WorldPosition((target.column() + 0.5) * cellWidth, (target.row() + 0.5) * cellHeight);
+            double distance = Math.hypot(targetPos.x() - ant.getPosition().x(), targetPos.y() - ant.getPosition().y());
+
+            if(distance > reachDistance){
+                returnCursor.put(ant, cursor);
+
+                return Math.atan2(targetPos.y() - ant.getPosition().y(), targetPos.x() - ant.getPosition().x());
+            }
+
+            cursor--;
+        }
+
+        returnCursor.put(ant, cursor);
+        return ant.getAngle();
     }
 }

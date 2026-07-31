@@ -74,8 +74,8 @@ public class World {
     * This method converts a continous two dimensional coordinate into a corresponding cell index
     */
     public CellIndex convertToCellIndex(WorldPosition pos){
-        int row = (int) (pos.y() / cellHeight);
-        int col = (int) (pos.x() / cellWidth);
+        int row = (int) Math.floor(pos.y() / cellHeight);
+        int col = (int) Math.floor(pos.x() / cellWidth);
 
         // Clamp the values to ensure they are within the grid bounds
         row = Math.clamp(row, 0, grid.getRows() - 1);
@@ -114,11 +114,11 @@ public class World {
     * This method verify if a position in the world is blocked by an obstacle or if it's out of boundries
     */
     public boolean isBlockedAt(WorldPosition pos){
-        int col = (int) (pos.x() / cellWidth);
-        int row = (int) (pos.y() / cellHeight);
+        int col = (int) Math.floor(pos.x() / cellWidth);
+        int row = (int) Math.floor(pos.y() / cellHeight);
 
         // In case is out of boundries, it will be considered as blocked
-        if(row <= 0 || row >= grid.getRows() || col <= 0 || col >= grid.getColumns()){
+        if(row < 0 || row >= grid.getRows() || col < 0 || col >= grid.getColumns()){
             return true;
         }
 

@@ -26,6 +26,20 @@ public class AntGroup {
         return Collections.unmodifiableList(ants);
     }
 
+    public int size(){
+        return ants.size();
+    }
+
+    public void clear(){
+        ants.clear();
+    }
+
+    public Ant removeLast(){
+        if(ants.isEmpty()){
+            throw new NoSuchElementException("Cannot remove from an empty group");
+        }
+        return ants.remove(ants.size() - 1);
+    }
     /**
      * This method updates all ants in the group by executing their decisiona and movement
      * @param dt                                Time delta for the physics update step
@@ -42,7 +56,6 @@ public class AntGroup {
             // Brain decides the new heading
             double nextAngle = engine.decideNextAngle(ant, world, pheromoneField);
             ant.setAngle(nextAngle);
-
             // Ant moves in the world
             ant.move(dt, world);
         }

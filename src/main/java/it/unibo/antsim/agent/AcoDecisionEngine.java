@@ -16,6 +16,7 @@ public class AcoDecisionEngine implements DecisionEngine {
     private final AcoParameters params;
     private final RandomGenerator random;
     private static final double EPSILON = 0.01;      // Small value to allow movement in empty fields
+    private static final double EXPLORATION_RATE = 0.10;
 
     public AcoDecisionEngine(AcoParameters params, RandomGenerator random) {
         this.params = Objects.requireNonNull(params, "ACO parameters cannot be null");
@@ -29,7 +30,7 @@ public class AcoDecisionEngine implements DecisionEngine {
         Objects.requireNonNull(pheromoneField, "Pheromone field cannot be null");
 
         // Determine which pheromone type the ant is sensitive in current state
-        PheromoneField.PheromoneType target = (ant.getState() == AntState.RETURNING_TO_NEST) ? PheromoneField.PheromoneType.HOME : PheromoneField.PheromoneType.FOOD;
+        PheromoneField.PheromoneType target = PheromoneField.PheromoneType.FOOD;
 
         // Define 3 candidates of the current angole
         double currentAngle = ant.getAngle();
@@ -41,6 +42,9 @@ public class AcoDecisionEngine implements DecisionEngine {
 
         double[] weights = new double[3];
         double totalweight = 0.0;
+
+        double explorationProb = ant.getRole() == AntRole.EXPLORER ? 0.35 : 0.05;
+        double noiseFactor = ant.getRole() == AntRole.EXPLORER ? params.randomFactor() : params.randomFactor() * 0.25;
 
         for(int i=0; i<3; i++){
             double angle = candidates[i];
@@ -65,13 +69,24 @@ public class AcoDecisionEngine implements DecisionEngine {
             double heuristic = (i==0) ? 1.0 : 0.5;
             double heuristicWeight = Math.pow(heuristic, params.beta());
 
-            weights[i] = pheromoneWeight * heuristicWeight;
+            weights[i] = (1.0 - EXPLORATION_RATE) * pheromoneWeight * heuristicWeight + EXPLORATION_RATE;
             totalweight += weights[i];
         }
         // If all paths are blocked or the weight is zero, make a random choice to avoid deadlock
         if(totalweight <= 0.0){
             double targetAngle = currentAngle + (random.nextDouble() - 0.5) * params.randomFactor();
             return applyTurnStrength(currentAngle, targetAngle);
+        }
+
+        if(random.nextDouble() < explorationProb){
+            for(int attempt=0; attempt<candidates.length; attempt++){
+                int candidate = random.nextInt(candidates.length);
+
+                if(weights[candidate] > 0.0){
+                    double noise = (random.nextDouble() - 0.5) * noiseFactor;
+                    return applyTurnStrength(currentAngle, candidates[candidate] + noise);
+                }
+            }
         }
 
         // Roulette wheel selection to choose on of the tree directions
@@ -81,7 +96,7 @@ public class AcoDecisionEngine implements DecisionEngine {
             cumulative += weights[i];
             if(roll<=cumulative){
                 // Add a small random noise to the chosen angle to make look the movement organic
-                double noise = (random.nextDouble() - 0.5) * params.randomFactor();
+                double noise = (random.nextDouble() - 0.5) * noiseFactor;
                 double targetAngle =  candidates[i] + noise;
                 return applyTurnStrength(currentAngle, targetAngle);
             }

@@ -12,6 +12,7 @@ import java.util.random.RandomGenerator;
 public class AntFactory {
     private final double defaultSpeed;
     private final RandomGenerator random;
+    private static final double EXPLORER_RATIO = 0.50;
 
     public AntFactory(double defaultSpeed, RandomGenerator random){
         if(defaultSpeed<=0){
@@ -47,6 +48,7 @@ public class AntFactory {
         // Randomly generates an orientation angle between 0 and 2pi
         double generateAngle = random.nextDouble() * 2 * Math.PI;
 
-        return new Ant(new WorldPosition(generateX, generateY), generateAngle, defaultSpeed);
+        AntRole role = random.nextDouble() < EXPLORER_RATIO ? AntRole.EXPLORER : AntRole.FOLLOWER;
+        return new Ant(new WorldPosition(generateX, generateY), generateAngle, defaultSpeed, role);
     }
 }

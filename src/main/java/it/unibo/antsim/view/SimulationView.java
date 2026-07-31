@@ -1,6 +1,7 @@
 package it.unibo.antsim.view;
 
 import it.unibo.antsim.agent.Ant;
+import it.unibo.antsim.agent.AntRole;
 import it.unibo.antsim.agent.AntState;
 import it.unibo.antsim.pheromone.PheromoneField;
 import it.unibo.antsim.simulation.SimulationStatistics;
@@ -310,8 +311,8 @@ public class SimulationView extends BorderPane {
         if(ant.getState() == AntState.RETURNING_TO_NEST){
             return Color.web("#ff9f43");
         }
-        if(ant.getState() == AntState.TARGETING_FOOD){
-            return Color.web("#70d6ff");
+        if(ant.getRole() == AntRole.EXPLORER){
+            return Color.web("#d980fa");
         }
         return Color.web("#f5f6fa");
     }

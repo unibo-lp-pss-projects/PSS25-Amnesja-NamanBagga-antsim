@@ -17,21 +17,21 @@ import javafx.stage.Stage;
 import java.util.Random;
 
 public class Main extends Application {
-    private static final int INITIAL_ANTS = 100;
+    private static final int INITIAL_ANTS = 5000;
 
     @Override
     public void start(final Stage stage){
         final Random random = new Random();
 
         final GenerationParameters worldParameters = new GenerationParameters(
-                40,
-                60,
-                12.0,
-                12.0,
-                0.0,
-                0,
-                1,
+                80,
                 100,
+                24.0,
+                24.0,
+                0.85,
+                7,
+                4,
+                1000,
                 3
         );
 
@@ -44,16 +44,16 @@ public class Main extends Application {
                 worldParameters.cellWidth(),
                 worldParameters.cellHeight(),
                 100.0,
-                new Evaporation(0.1)
+                new Evaporation(0.10)
         );
 
         final AcoParameters acoParameters = new AcoParameters(
-                1.0,
-                1.0,
-                18.0,
+                1.2,
+                0.2,
+                32.0,
                 Math.PI/4.0,
-                Math.PI/3.0,
-                Math.PI/5.0
+                Math.PI/6.0,
+                Math.PI/3.0
         );
 
         final SimulationEngine engine = new SimulationEngine(

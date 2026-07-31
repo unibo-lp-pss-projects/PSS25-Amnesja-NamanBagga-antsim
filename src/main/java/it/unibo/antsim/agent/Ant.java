@@ -4,6 +4,7 @@ import it.unibo.antsim.world.World;
 import it.unibo.antsim.world.WorldPosition;
 
 import java.util.Objects;
+import java.util.random.RandomGenerator;
 
 /*
  * This class is basically an ant in the simulation, whit continous coordinates and orientation
@@ -13,13 +14,15 @@ public class Ant {
     private double angle; // It rappresents the orientation in radiant
     private final double speed;
     private AntState state;
+    private final AntRole role;
     private boolean carryingFood;
 
-    public Ant(WorldPosition initialPosition, double initialAngle, double speed) {
+    public Ant(WorldPosition initialPosition, double initialAngle, double speed, AntRole role) {
         this.position = Objects.requireNonNull(initialPosition, "Initial position cannot be null");
         this.angle = normalizeAngle(initialAngle);
         this.speed = speed;
         this.state = AntState.WANDERING;
+        this.role = Objects.requireNonNull(role, "Role can't be null");
         this.carryingFood = false;
     }
 
@@ -28,6 +31,7 @@ public class Ant {
     public double getAngle() { return angle; }
     public double getSpeed() { return speed; }
     public AntState getState() { return state; }
+    public AntRole getRole(){ return role; }
     public boolean isCarryingFood() { return carryingFood; }
 
     // Setters
@@ -54,13 +58,24 @@ public class Ant {
         double dx = speed * Math.cos(angle) * tick;
         double dy = speed * Math.sin(angle) * tick;
         WorldPosition nextPos = new WorldPosition(position.x() + dx, position.y() + dy);
+        boolean escaped = false;
 
         // Collision controls
         if(!world.isBlockedAt(nextPos)){
             this.position = nextPos;
         }else{
-            // In case it's a collision, in poor words we do a u-turn
-            this.angle = normalizeAngle(this.angle + Math.PI + (Math.random() - 0.5));
+            // try loop instead of bounce
+            for(int i=0; i<8;i++){
+                double tryAngle = normalizeAngle(this.angle + Math.PI + (Math.random() - 0.5) * Math.PI);
+                double testX = position.x() + speed * Math.cos(tryAngle);
+                double testY = position.y() + speed * Math.sin(tryAngle);
+                if(!world.isBlockedAt(new WorldPosition(testX, testY))){
+                    this.angle = tryAngle;
+                    this.position = new WorldPosition(testX, testY);
+                    escaped = true;
+                    break;
+                }
+            }
         }
     }
 
