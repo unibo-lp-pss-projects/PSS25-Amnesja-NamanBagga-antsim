@@ -27,7 +27,7 @@ public class AntFactory {
      * @param nestIndex         grid cell where nest is located
      * @param cellSizeX         width of a single cell in the grid
      * @param cellSizeY         height of a single cell in the grid
-     * @return a newly created ant positioned randomly inside the cell with a random angle
+     * @return                  a newly created ant positioned randomly inside the cell with a random angle
      */
     public Ant generateAntInNest(CellIndex nestIndex, double cellSizeX, double cellSizeY){
         if(cellSizeX<0 || cellSizeY<0){
