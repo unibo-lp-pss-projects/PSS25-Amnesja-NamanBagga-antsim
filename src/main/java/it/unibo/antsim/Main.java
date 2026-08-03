@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 import java.util.Random;
 
 public class Main extends Application {
-    private static final int INITIAL_ANTS = 5000;
+    private static final int INITIAL_ANTS = 10000;
 
     @Override
     public void start(final Stage stage){
@@ -26,12 +26,12 @@ public class Main extends Application {
         final GenerationParameters worldParameters = new GenerationParameters(
                 80,
                 100,
-                24.0,
-                24.0,
+                20.0,
+                20.0,
                 0.85,
-                7,
+                0,
                 4,
-                1000,
+                10000,
                 3
         );
 
@@ -44,15 +44,15 @@ public class Main extends Application {
                 worldParameters.cellWidth(),
                 worldParameters.cellHeight(),
                 100.0,
-                new Evaporation(0.10)
+                new Evaporation(1.5)
         );
 
         final AcoParameters acoParameters = new AcoParameters(
-                1.2,
+                4.0,
                 0.2,
                 32.0,
                 Math.PI/4.0,
-                Math.PI/6.0,
+                Math.PI/3.0,
                 Math.PI/3.0
         );
 

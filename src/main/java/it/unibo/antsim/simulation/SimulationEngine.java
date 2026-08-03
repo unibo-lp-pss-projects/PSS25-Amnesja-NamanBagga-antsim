@@ -25,10 +25,7 @@ public class SimulationEngine {
     private final DecisionEngine decisionEngine;
     private final AntGroup antGroup;
     private final AntFactory antFactory;
-    private static final double PHEROMONE_Q = 150.0;
-    private static final double PHEROMONE_HOME_DEPOSIT_RATE = 0.0;
-    private static final double PHEROMONE_FOOD_DEPOSIT_RATE = 2.0;
-    private static final double MIN_TRIP_LENGTH = 1.0;
+    private static final double PHEROMONE_FOOD_DEPOSIT_RATE = 3.0;
     private final Map<Ant, Double> returnTripLength;
     private final Map<Ant, List<CellIndex>> returnPath;
     private final Map<Ant, List<CellIndex>> outboundPath;
@@ -196,21 +193,12 @@ public class SimulationEngine {
                 continue;
             }
 
-            double tripLength = Math.max(MIN_TRIP_LENGTH, returnTripLength.getOrDefault(ant, 0.0));
-            List<CellIndex> path = returnPath.get(ant);
-            if(path!=null && !path.isEmpty()){
-                double depositPerCell = PHEROMONE_Q/ tripLength;
-                for(CellIndex cell:path){
-                    pheromoneField.deposit(cell, PheromoneField.PheromoneType.FOOD, depositPerCell);
-                }
-            }
             foodCollected++;
             ant.dropFood();
             returnTripLength.remove(ant);
             returnPath.remove(ant);
             outboundPath.remove(ant);
             returnCursor.remove(ant);
-            System.out.println("NEST_DELIVERY ant=" + ant.getPosition() + " state=" + ant.getState() + " trip=" + tripLength);
         }
 
     }

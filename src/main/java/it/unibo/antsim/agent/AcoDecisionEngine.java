@@ -16,7 +16,6 @@ public class AcoDecisionEngine implements DecisionEngine {
     private final AcoParameters params;
     private final RandomGenerator random;
     private static final double EPSILON = 0.01;      // Small value to allow movement in empty fields
-    private static final double EXPLORATION_RATE = 0.10;
 
     public AcoDecisionEngine(AcoParameters params, RandomGenerator random) {
         this.params = Objects.requireNonNull(params, "ACO parameters cannot be null");
@@ -43,8 +42,11 @@ public class AcoDecisionEngine implements DecisionEngine {
         double[] weights = new double[3];
         double totalweight = 0.0;
 
-        double explorationProb = ant.getRole() == AntRole.EXPLORER ? 0.35 : 0.05;
-        double noiseFactor = ant.getRole() == AntRole.EXPLORER ? params.randomFactor() : params.randomFactor() * 0.25;
+        boolean explorer = ant.getRole() == AntRole.EXPLORER;
+
+        double explorationProb = explorer ? 0.35 : 0.05;
+        double explorationRate = explorer ? 0.10 : 0.01;
+        double noiseFactor = explorer ? params.randomFactor() : params.randomFactor() * 0.25;
 
         for(int i=0; i<3; i++){
             double angle = candidates[i];
@@ -69,7 +71,7 @@ public class AcoDecisionEngine implements DecisionEngine {
             double heuristic = (i==0) ? 1.0 : 0.5;
             double heuristicWeight = Math.pow(heuristic, params.beta());
 
-            weights[i] = (1.0 - EXPLORATION_RATE) * pheromoneWeight * heuristicWeight + EXPLORATION_RATE;
+            weights[i] = (1.0 - explorationRate) * pheromoneWeight * heuristicWeight + explorationRate;
             totalweight += weights[i];
         }
         // If all paths are blocked or the weight is zero, make a random choice to avoid deadlock
