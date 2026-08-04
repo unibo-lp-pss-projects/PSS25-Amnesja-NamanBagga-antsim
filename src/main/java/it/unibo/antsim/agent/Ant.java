@@ -58,7 +58,6 @@ public class Ant {
         double dx = speed * Math.cos(angle) * tick;
         double dy = speed * Math.sin(angle) * tick;
         WorldPosition nextPos = new WorldPosition(position.x() + dx, position.y() + dy);
-        boolean escaped = false;
 
         // Collision controls
         if(!world.isBlockedAt(nextPos)){
@@ -67,13 +66,11 @@ public class Ant {
             // try loop instead of bounce
             for(int i=0; i<8;i++){
                 double tryAngle = normalizeAngle(this.angle + Math.PI + (Math.random() - 0.5) * Math.PI);
-                double testX = position.x() + speed * Math.cos(tryAngle);
-                double testY = position.y() + speed * Math.sin(tryAngle);
+                double testX = position.x() + speed * tick * Math.cos(tryAngle);
+                double testY = position.y() + speed * tick * Math.sin(tryAngle);
                 if(!world.isBlockedAt(new WorldPosition(testX, testY))){
                     this.angle = tryAngle;
                     this.position = new WorldPosition(testX, testY);
-                    escaped = true;
-                    break;
                 }
             }
         }

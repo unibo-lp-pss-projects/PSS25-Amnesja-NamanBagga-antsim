@@ -30,9 +30,9 @@ public class Main extends Application {
                 20.0,
                 0.85,
                 0,
-                4,
+                1,
                 10000,
-                3
+                6
         );
 
         final WorldGenerator worldGenerator = new WorldGenerator(random);
@@ -44,7 +44,7 @@ public class Main extends Application {
                 worldParameters.cellWidth(),
                 worldParameters.cellHeight(),
                 100.0,
-                new Evaporation(1.5)
+                new Evaporation(0.5)
         );
 
         final AcoParameters acoParameters = new AcoParameters(
