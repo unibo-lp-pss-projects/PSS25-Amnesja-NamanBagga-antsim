@@ -3,6 +3,7 @@ package it.unibo.antsim.world;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /*
 * Main aggregate of the world module that bridges the discrete grid an continuous sppace.
@@ -176,5 +177,16 @@ public class World {
             }
         }
         return Optional.empty();
+    }
+
+    public void forEachFoodCell(Consumer<CellIndex> action){
+        for(int i=0; i<grid.getRows(); i++){
+            for(int j=0;j<grid.getColumns(); j++){
+                CellIndex index = new CellIndex(i, j);
+                if(grid.getCellAt(index).getCellContent() instanceof CellContent.Food){
+                    action.accept(index);
+                }
+            }
+        }
     }
 }

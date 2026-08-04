@@ -29,7 +29,7 @@ public class AcoDecisionEngine implements DecisionEngine {
         Objects.requireNonNull(pheromoneField, "Pheromone field cannot be null");
 
         // Determine which pheromone type the ant is sensitive in current state
-        PheromoneField.PheromoneType target = PheromoneField.PheromoneType.FOOD;
+        PheromoneField.PheromoneType target = ant.getState() == AntState.RETURNING_TO_NEST ? PheromoneField.PheromoneType.HOME : PheromoneField.PheromoneType.FOOD;
 
         // Define 3 candidates of the current angole
         double currentAngle = ant.getAngle();
@@ -44,8 +44,8 @@ public class AcoDecisionEngine implements DecisionEngine {
 
         boolean explorer = ant.getRole() == AntRole.EXPLORER;
 
-        double explorationProb = explorer ? 0.35 : 0.05;
-        double explorationRate = explorer ? 0.10 : 0.01;
+        double explorationProb = explorer ? 0.15 : 0.05;
+        double explorationRate = explorer ? 0.03 : 0.01;
         double noiseFactor = explorer ? params.randomFactor() : params.randomFactor() * 0.25;
 
         for(int i=0; i<3; i++){

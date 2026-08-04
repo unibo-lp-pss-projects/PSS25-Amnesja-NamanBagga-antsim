@@ -1,5 +1,6 @@
 package it.unibo.antsim.agent;
 
+import it.unibo.antsim.world.CellIndex;
 import it.unibo.antsim.world.World;
 import it.unibo.antsim.world.WorldPosition;
 
@@ -16,6 +17,9 @@ public class Ant {
     private AntState state;
     private final AntRole role;
     private boolean carryingFood;
+    private CellIndex prevCell = null;
+    private int stepsSinceLastDeposit = 0;
+    private static final int DEPOSIT_EVERY_N_STEPS = 3;
 
     public Ant(WorldPosition initialPosition, double initialAngle, double speed, AntRole role) {
         this.position = Objects.requireNonNull(initialPosition, "Initial position cannot be null");
@@ -28,6 +32,7 @@ public class Ant {
 
     // Getters
     public WorldPosition getPosition() { return position; }
+    public CellIndex getPrevCell() { return prevCell; }
     public double getAngle() { return angle; }
     public double getSpeed() { return speed; }
     public AntState getState() { return state; }
@@ -53,7 +58,7 @@ public class Ant {
      */
     public void move(double tick, World world){
         Objects.requireNonNull(world);
-
+        this.prevCell = world.convertToCellIndex(this.position);
         // Movement calculation
         double dx = speed * Math.cos(angle) * tick;
         double dy = speed * Math.sin(angle) * tick;
@@ -71,6 +76,7 @@ public class Ant {
                 if(!world.isBlockedAt(new WorldPosition(testX, testY))){
                     this.angle = tryAngle;
                     this.position = new WorldPosition(testX, testY);
+                    break;
                 }
             }
         }

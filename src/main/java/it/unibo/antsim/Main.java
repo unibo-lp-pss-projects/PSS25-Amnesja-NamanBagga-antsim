@@ -44,12 +44,12 @@ public class Main extends Application {
                 worldParameters.cellWidth(),
                 worldParameters.cellHeight(),
                 100.0,
-                new Evaporation(0.5)
+                new Evaporation(1.5)
         );
 
         final AcoParameters acoParameters = new AcoParameters(
-                4.0,
-                0.2,
+                2.0,
+                0.5,
                 32.0,
                 Math.PI/4.0,
                 Math.PI/3.0,
