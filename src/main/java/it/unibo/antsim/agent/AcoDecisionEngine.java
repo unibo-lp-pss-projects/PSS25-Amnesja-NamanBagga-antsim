@@ -1,6 +1,7 @@
 package it.unibo.antsim.agent;
 
 import it.unibo.antsim.pheromone.PheromoneField;
+import it.unibo.antsim.world.CellIndex;
 import it.unibo.antsim.world.World;
 import it.unibo.antsim.world.WorldPosition;
 
@@ -16,6 +17,7 @@ public class AcoDecisionEngine implements DecisionEngine {
     private final AcoParameters params;
     private final RandomGenerator random;
     private static final double EPSILON = 0.01;      // Small value to allow movement in empty fields
+    private static final double HOMING_WEIGHT = 1.5;
 
     public AcoDecisionEngine(AcoParameters params, RandomGenerator random) {
         this.params = Objects.requireNonNull(params, "ACO parameters cannot be null");
@@ -48,6 +50,17 @@ public class AcoDecisionEngine implements DecisionEngine {
         double explorationRate = explorer ? 0.03 : 0.01;
         double noiseFactor = explorer ? params.randomFactor() : params.randomFactor() * 0.25;
 
+        double homingAngle = Double.NaN;
+        if(ant.getState() == AntState.RETURNING_TO_NEST){
+            CellIndex nestIndex = world.getNestIndex();
+            if(nestIndex != null){
+                double cellWidth = world.getWidth() / world.getColumns();
+                double cellHeight = world.getHeight() / world.getRows();
+                double nestX = (nestIndex.column() + 0.5) * cellWidth;
+                double nestY = (nestIndex.row() + 0.5) * cellHeight;
+                homingAngle = Math.atan2(nestY - ant.getPosition().y(), nestX - ant.getPosition().x());
+            }
+        }
         for(int i=0; i<3; i++){
             double angle = candidates[i];
 
@@ -72,6 +85,10 @@ public class AcoDecisionEngine implements DecisionEngine {
             double heuristicWeight = Math.pow(heuristic, params.beta());
 
             weights[i] = (1.0 - explorationRate) * pheromoneWeight * heuristicWeight + explorationRate;
+            if(!Double.isNaN(homingAngle)){
+                double alignment = Math.cos(homingAngle - angle);
+                weights[i] *= Math.exp(HOMING_WEIGHT * alignment);
+            }
             totalweight += weights[i];
         }
         // If all paths are blocked or the weight is zero, make a random choice to avoid deadlock

@@ -91,6 +91,7 @@ public class Ant {
         }
         carryingFood = true;
         state = AntState.RETURNING_TO_NEST;
+        this.angle = normalizeAngle(this.angle + Math.PI); // Reverse direction
     }
 
     /**
@@ -102,6 +103,7 @@ public class Ant {
         }
         carryingFood = false;
         state = AntState.WANDERING;
+        this.angle = normalizeAngle(this.angle + Math.PI); // Reverse direction
     }
     // This method normalizes the angle to be in the range [0, 2π)
     private double normalizeAngle(double ang){
