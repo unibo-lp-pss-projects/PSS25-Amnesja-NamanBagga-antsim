@@ -1,0 +1,235 @@
+@startuml
+    title AntSim - Modello del dominio
+
+    skinparam classAttributeIconSize 0
+    skinparam linetype ortho
+    hide empty members
+
+    package "World" {
+
+    class World {
+        - grid: Grid
+        - cellWidth: double
+        - cellHeight: double
+        - nestIndex: CellIndex
+        --
+        + World(rows, columns, cellWidth, cellHeight)
+        + getRows(): int
+        + getColumns(): int
+        + getWidth(): double
+        + getHeight(): double
+        + getGrid(): Grid
+        + getNestIndex(): CellIndex
+        + relocateNest(newIndex: CellIndex): void
+        + convertToCellIndex(position: WorldPosition): CellIndex
+        + getWalkableNeighbors(index: CellIndex): List<CellIndex>
+        + isBlockedAt(position: WorldPosition): boolean
+        + isNestAt(position: WorldPosition): boolean
+        + isFoodAt(position: WorldPosition): boolean
+        + findFoodCellNear(position: WorldPosition): Optional<CellIndex>
+        + consumeFood(index: CellIndex): boolean
+        + placeFood(index: CellIndex, amount: int): void
+        + placeObstacle(index: CellIndex): void
+        + clearCell(index: CellIndex): void
+    }
+
+    class Grid{
+        - rows: int
+        - columns: int
+        - cells: Cell[][]
+        --
+        + Grid(rows: int, columns: int)
+        + getRows(): int
+        + getColumns(): int
+        + isInside(index: CellIndex): boolean
+        + getCellAt(index: CellIndex): Cell
+        + setCellContent(index: CellIndex, content: CellContent): void
+    }
+
+    class Cell{
+        - content: CellContent
+        --
+        + Cell(content: CellContent)
+        + getCellContent(): CellContent
+        + setCellContent(content: CellContent): void
+        + consumeFood(amount: int): void
+    }
+
+    class CellIndex <<record>> {
+        + row: int
+        + column: int
+    }
+
+    class WorldPosition <<record>> {
+        + x: double
+        + y: double
+        --
+        + distanceToAnotherPosition(other: WorldPosition): double
+        + add(x: double, y: double): WorldPosition
+    }
+
+    interface CellContent <<sealed>>
+
+    class Empty <<record>>
+    class Obstacle <<record>>
+
+    class Food <<record>> {
+        + quantity: int
+        --
+        + consume(amount: int): Food
+        + isEmpty(): boolean
+    }
+
+    class Nest <<record>>
+    }
+
+    package "Ant agents"{
+
+    class Ant {
+        - position: WorldPosition
+        - angle: double
+        - speed: double
+        - state: AntState
+        - role: AntRole
+        - carryingFood: boolean
+        - prevCell: CellIndex
+        --
+        + Ant(position, angle, speed, role)
+        + getPosition(): WorldPosition
+        + getAngle(): double
+        + getSpeed(): double
+        + getState(): AntState
+        + getRole(): AntRole
+        + isCarryingFood(): boolean
+        + move(dt: double, world: World): void
+        + setAngle(angle: double): void
+        + setState(state: AntState): void
+        + pickFood(): void
+        + dropFood(): void
+    }
+
+    class AntGroup {
+        - ants: List<Ant>
+        --
+        + addAnt(ant: Ant): void
+        + getAnts(): List<Ant>
+        + size(): int
+        + clear(): void
+        + removeLast(): Ant
+        + update(dt, world, pheromones, engine): void
+    }
+
+    class AntFactory {
+        - defaultSpeed: double
+        - random: RandomGenerator
+        --
+        + generateAntInNest(nest, cellWidth, cellHeight): Ant
+    }
+
+    enum AntState {
+        WANDERING
+        RETURNING_TO_NEST
+    }
+
+    enum AntRole {
+        EXPLORER
+        FOLLOWER
+    }
+    }
+
+    package "Pheromones" {
+
+    interface PheromoneField {
+        + level(position: WorldPosition, type: PheromoneType): double
+        + deposit(index: CellIndex, type: PheromoneType, intensity: double): void
+        + evaporate(dt: double): void
+        + clear(): void
+    }
+
+    class PheromoneMap {
+        - rows: int
+        - cols: int
+        - foodPheromones: double[][]
+        - homePheromones: double[][]
+        - evaporationModel: EvaporationModel
+        --
+        + level(position, type): double
+        + deposit(index, type, intensity): void
+        + evaporate(dt): void
+        + clear(): void
+    }
+
+    interface EvaporationModel {
+        + decay(currentLevel: double, dt: double): double
+    }
+
+    class Evaporation <<record>> {
+        + decayRate: double
+        --
+        + decay(currentLevel: double, dt: double): double
+    }
+
+    enum PheromoneType {
+        FOOD
+        HOME
+    }
+    }
+
+    ' --- RELAZIONI "WORLD" ---
+    World *-- "1" Grid : contiene
+    Grid *-- "1..*" Cell : contiene
+    World --> "0..1" CellIndex : posizione del nido
+    Cell --> "1" CellContent : contenuto
+
+    ' Gerarchia dei contenuti di cella
+    CellContent <|.. Empty
+    CellContent <|.. Obstacle
+    CellContent <|.. Food
+    CellContent <|.. Nest
+
+    ' --- RELAZIONI "ANT AGENTS" ---
+    AntGroup *-- "0..*" Ant : gestisce
+    Ant --> WorldPosition : posizione
+    Ant --> CellIndex : cella precedente
+    Ant --> AntState : stato
+    Ant --> AntRole : ruolo
+    AntFactory ..> Ant : crea
+    Ant ..> World : si muove in
+    AntGroup ..> World : aggiorna
+    AntGroup ..> PheromoneField : usa
+
+    ' --- RELAZIONI "PHEROMONES" ---
+    PheromoneField <|.. PheromoneMap
+    EvaporationModel <|.. Evaporation
+    PheromoneMap --> "1" EvaporationModel : evapora tramite
+    PheromoneField --> PheromoneType : tipo
+    PheromoneMap ..> CellIndex : deposito
+    PheromoneMap ..> WorldPosition : lettura
+
+    note right of World
+    Coordinatore dell'ambiente.
+
+    Coordina la griglia, il nido,
+    gli osctacoli, le fonti di cibo
+    e le conversioni tra coordinate
+    continue e celle discrete.
+    end note
+
+    note bottom of Ant
+    Un agente autonomo.
+
+    Cerca il cibo nello stato
+    WANDERING e, dopo averlo raccolto,
+    torna al nido nello stato
+    RETURNING_TO_NEST
+    end note
+
+    note right of PheromoneMap
+    Mantiene due campi:
+    - FOOD: traccia verso il cibo dopo averlo raccolto
+    - HOME: traccia verso il nido appena escono dal nido
+
+    I livelli decadono nel tempo secondo EvaporationModel.
+    end note
+
+@enduml
