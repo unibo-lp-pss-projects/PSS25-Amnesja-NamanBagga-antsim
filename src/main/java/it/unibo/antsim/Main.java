@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 import java.util.Random;
 
 public class Main extends Application {
-    private static final int INITIAL_ANTS = 5000;
+    private static final int INITIAL_ANTS = 100;
 
     @Override
     public void start(final Stage stage){
@@ -30,13 +30,13 @@ public class Main extends Application {
                 20.0,
                 0.85,
                 0,
-                4,
+                10,
                 1000,
                 6
         );
 
         final WorldGenerator worldGenerator = new WorldGenerator(random);
-        final World world = worldGenerator.generate(worldParameters);
+        final World world = new World(worldParameters.rows(), worldParameters.cols(), worldParameters.cellWidth(), worldParameters.cellHeight());
 
         final PheromoneMap pheromoneMap = new PheromoneMap(
                 worldParameters.rows(),
@@ -64,8 +64,6 @@ public class Main extends Application {
                 worldGenerator,
                 worldParameters
         );
-
-        engine.setAgentCount(INITIAL_ANTS);
 
         final SimulationController controller = new SimulationController(engine, pheromoneMap, INITIAL_ANTS);
 

@@ -14,10 +14,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
-import javafx.scene.control.Slider;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -45,14 +42,31 @@ public class SimulationView extends BorderPane {
     private Runnable onReset = () -> {};
     private Consumer<Integer> onAntCountChanged = ignored -> {};
     private Consumer<Double> onSpeedChanged = ignored -> {};
+    private Consumer<WorldEdit> onWorldEdit = ignored -> {};
     private Runnable onCanvasResized = () -> {};
+    private Runnable onGenerateWorld = () -> {};
 
-    public SimulationView(){
+    private EditorTool selectedTool = EditorTool.NEST;
+    private int selectedFoodQuantity = 1000;
+
+    private World renderWorld;
+    private double renderScale;
+    private double renderXOffset;
+    private double renderYOffset;
+
+    public SimulationView(final int initialAntCount){
         canvas = new Canvas();
+
+        canvas.setOnMousePressed(event -> editCellAt(event.getX(), event.getY()));
+        canvas.setOnMouseDragged(event ->{
+            if(selectedTool != EditorTool.NEST){
+                editCellAt(event.getX(), event.getY());
+            }
+        });
 
         setTop(createToolbar());
         setCenter(createCanvasArea());
-        setRight(createSidePanel());
+        setRight(createSidePanel(initialAntCount));
 
         setStyle("-fx-background-color: #171a1f;");
     }
@@ -77,6 +91,12 @@ public class SimulationView extends BorderPane {
         onCanvasResized = Objects.requireNonNull(callback);
     }
 
+    public void setOnGenerateWorld(final Runnable callback){
+        onGenerateWorld = Objects.requireNonNull(callback);
+    }
+    public void setOnWorldEdit(final Consumer<WorldEdit> callback) {
+        onWorldEdit = Objects.requireNonNull(callback);
+    }
     public void setRunning(final boolean running){
         startPauseButton.setText(running ? "Pausa" : "Avvia");
         statusLabel.setText(running ? "Stato: ESECUZIONE" : "Stato: PAUSA");
@@ -104,18 +124,25 @@ public class SimulationView extends BorderPane {
         final double xOffset = (canvas.getWidth() - worldScreenWidth) / 2.0;
         final double yOffset = (canvas.getHeight() - worldScreenHeight) / 2.0;
 
+        renderWorld = world;
+        renderScale = scale;
+        renderXOffset = xOffset;
+        renderYOffset = yOffset;
+
         drawPheromones(gc, world, pheromoneField, scale, xOffset, yOffset);
         drawWorld(gc, world, scale, xOffset, yOffset);
         drawAnts(gc, ants, scale, xOffset, yOffset);
     }
 
     private HBox createToolbar(){
-        final Button resetButton = new Button("Reset");
+        final Button generateButton = new Button("Genera scenario");
+        final Button resetButton = new Button("Mappa vuota");
 
         startPauseButton.setOnAction(event -> onStartPause.run());
+        generateButton.setOnAction(event -> onGenerateWorld.run());
         resetButton.setOnAction(event -> onReset.run());
 
-        final HBox toolbar = new HBox(10, startPauseButton, resetButton);
+        final HBox toolbar = new HBox(10, startPauseButton, generateButton, resetButton);
         toolbar.setAlignment(Pos.CENTER_LEFT);
         toolbar.setPadding(new Insets(10));
         toolbar.setStyle("-fx-background-color: #252a33;");
@@ -137,22 +164,37 @@ public class SimulationView extends BorderPane {
         return pane;
     }
 
-    private VBox createSidePanel(){
+    private VBox createSidePanel(final int initialAntCount){
         final Label statsTitle = sectionTitle("STATISTICHE");
         final Label parameterTitle = sectionTitle("PARAMETRI");
 
-        final Slider antSlider = new Slider(10, 500, 100);
-        antSlider.setShowTickLabels(true);
-        antSlider.setShowTickMarks(true);
-        antSlider.setMajorTickUnit(100);
-        antSlider.setBlockIncrement(10);
-        antSlider.valueProperty().addListener((observable, oldValue, newValue) -> onAntCountChanged.accept(newValue.intValue()));
+        final Spinner<Integer> antSpinner = createIntegerSpinner(1, 25_000, initialAntCount);
+        antSpinner.valueProperty().addListener((observable, oldValue, newValue) -> onAntCountChanged.accept(newValue));
 
         final Slider speedSlider = new Slider(0.25, 5.0, 1.0);
         speedSlider.setShowTickLabels(true);
         speedSlider.setShowTickMarks(true);
         speedSlider.setMajorTickUnit(1.0);
         speedSlider.valueProperty().addListener((observable, oldValue, newValue) -> onSpeedChanged.accept(newValue.doubleValue()));
+
+        final Label editoTitle = sectionTitle("EDITOR MAPPA");
+        final ToggleGroup tools = new ToggleGroup();
+
+        final ToggleButton nestTool = createToolButton("NIDO", EditorTool.NEST, tools);
+        final ToggleButton foodTool = createToolButton("CIBO", EditorTool.FOOD, tools);
+        final ToggleButton obstacleTool = createToolButton("OSTACOLO", EditorTool.OBSTACLE, tools);
+        final ToggleButton eraserTool = createToolButton("CANCELLA", EditorTool.ERASER, tools);
+
+        nestTool.setSelected(true);
+
+        final Spinner<Integer> foodAmountSpinner = createIntegerSpinner(1, 100_000, 1_000);
+        foodAmountSpinner.valueProperty().addListener((observable, oldValue, newValue) -> selectedFoodQuantity = newValue.intValue());
+
+        final Label foodAmountLabel = new Label("QUANTITA' CIBO: 1000");
+        foodAmountSpinner.valueProperty().addListener((observable, oldValue, newValue) -> {
+            selectedFoodQuantity = newValue.intValue();
+            foodAmountLabel.setText("QUANTITA' CIBO: " + selectedFoodQuantity);
+        });
 
         final VBox panel = new VBox(
                 10,
@@ -163,9 +205,15 @@ public class SimulationView extends BorderPane {
                 antsLabel,
                 foodLabel,
                 new Separator(),
+                editoTitle,
+                new HBox(8, nestTool, foodTool),
+                new HBox(8, obstacleTool, eraserTool),
+                foodAmountLabel,
+                foodAmountSpinner,
+                new Separator(),
                 parameterTitle,
                 new Label("Numero Formiche"),
-                antSlider,
+                antSpinner,
                 new Label("Velocità"),
                 speedSlider
         );
@@ -315,5 +363,53 @@ public class SimulationView extends BorderPane {
             return Color.web("#d980fa");
         }
         return Color.web("#f5f6fa");
+    }
+
+    private void editCellAt(final double screenX, final double screenY){
+        if(renderWorld == null || renderScale <= 0){
+            return;
+        }
+
+        final double worldX = (screenX - renderXOffset) / renderScale;
+        final double worldY = (screenY - renderYOffset) / renderScale;
+
+        if(worldX < 0 || worldX >= renderWorld.getWidth() || worldY < 0 || worldY >= renderWorld.getHeight()){
+            return;
+        }
+
+        final CellIndex cell = renderWorld.convertToCellIndex(new WorldPosition(worldX, worldY));
+
+        onWorldEdit.accept(new WorldEdit(cell, selectedTool, selectedFoodQuantity));
+    }
+
+    private ToggleButton createToolButton(final String text, final EditorTool tool, final ToggleGroup group){
+        final ToggleButton button = new ToggleButton(text);
+        button.setToggleGroup(group);
+        button.setOnAction(event -> selectedTool = tool);
+        return button;
+    }
+
+    private Spinner<Integer> createIntegerSpinner(final int min, final int max, final int initialValue){
+        final Spinner<Integer> spinner = new Spinner<>(min, max, initialValue);
+
+        spinner.setEditable(true);
+
+        spinner.getEditor().setOnAction(event -> commitIntegerSpinner(spinner, min, max));
+        spinner.getEditor().focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if(!isFocused()){
+                commitIntegerSpinner(spinner, min, max);
+            }
+        });
+
+        return spinner;
+    }
+
+    private void commitIntegerSpinner(final Spinner<Integer> spinner, final int min, final int max){
+        try {
+            final int typedvalue = Integer.parseInt(spinner.getEditor().getText());
+            spinner.getValueFactory().setValue(Math.clamp(typedvalue, min, max));
+        } catch (NumberFormatException ignored) {
+            spinner.getEditor().setText(String.valueOf(spinner.getValue()));
+        }
     }
 }

@@ -67,14 +67,27 @@ public class SimulationEngine {
     }
 
     public void reset(){
+        createEmptyScenario();
+    }
+
+    public void generateScenario(){
         status = SimulationStatus.IDLE;
         clock.reset();
         foodCollected = 0;
 
         antGroup.clear();
-
-        world = worldGenerator.generate(generationParameters);
         pheromoneField.clear();
+        world = worldGenerator.generate(generationParameters);
+    }
+
+    public void createEmptyScenario(){
+        status = SimulationStatus.IDLE;
+        clock.reset();
+        foodCollected = 0;
+
+        antGroup.clear();
+        pheromoneField.clear();
+        world = new World(generationParameters.rows(), generationParameters.cols(), generationParameters.cellWidth(), generationParameters.cellHeight());
     }
     public void step(double dt){
         if(status!=SimulationStatus.RUNNING){

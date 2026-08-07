@@ -179,14 +179,33 @@ public class World {
         return Optional.empty();
     }
 
-    public void forEachFoodCell(Consumer<CellIndex> action){
-        for(int i=0; i<grid.getRows(); i++){
-            for(int j=0;j<grid.getColumns(); j++){
-                CellIndex index = new CellIndex(i, j);
-                if(grid.getCellAt(index).getCellContent() instanceof CellContent.Food){
-                    action.accept(index);
-                }
-            }
+    public void placeFood(CellIndex cellIndex, int amount){
+        if(!grid.isInside(cellIndex)){
+            throw new IndexOutOfBoundsException("Food position is outside the grid");
+        }
+        if(cellIndex.equals(nestindex)){
+            throw new IllegalStateException("You cannot place food on the nest");
+        }
+        grid.setCellContent(cellIndex, new CellContent.Food(amount));
+    }
+
+    public void placeObstacle(CellIndex cellIndex){
+        if(!grid.isInside(cellIndex)){
+            throw new IndexOutOfBoundsException("Obstacle position is outside the grid");
+        }
+        if(cellIndex.equals(nestindex)){
+            throw new IllegalStateException("You cannot place an obstacle on the nest");
+        }
+        grid.setCellContent(cellIndex, new CellContent.Obstacle());
+    }
+
+    public void clearCell(CellIndex cellIndex){
+        if(!grid.isInside(cellIndex)){
+            throw new IndexOutOfBoundsException("Cell position is outside the grid");
+        }
+        grid.setCellContent(cellIndex, new CellContent.Empty());
+        if(cellIndex.equals(nestindex)){
+            nestindex = null;
         }
     }
 }

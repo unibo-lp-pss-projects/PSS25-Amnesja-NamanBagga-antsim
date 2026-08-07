@@ -4,6 +4,8 @@ import it.unibo.antsim.pheromone.PheromoneField;
 import it.unibo.antsim.simulation.SimulationEngine;
 import it.unibo.antsim.simulation.SimulationStatus;
 import it.unibo.antsim.view.SimulationView;
+import it.unibo.antsim.view.WorldEdit;
+import it.unibo.antsim.world.World;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
@@ -26,7 +28,7 @@ public class SimulationController {
         this.engine = Objects.requireNonNull(engine);
         this.pheromoneField = Objects.requireNonNull(pheromoneField);
         this.requestedAntCount = initialAntCount;
-        this.view = new SimulationView();
+        this.view = new SimulationView(initialAntCount);
         this.timeline = new Timeline(new KeyFrame(Duration.millis(FRAME_MILLIS), event -> tick()));
         this.timeline.setCycleCount(Timeline.INDEFINITE);
 
@@ -35,6 +37,8 @@ public class SimulationController {
         view.setOnAntCountChanged(this::setAntCount);
         view.setOnSpeedChanged(value -> speedMultiplier = value);
         view.setOnCanvasResized(this::render);
+        view.setOnGenerateWorld(this::generateScenario);
+        view.setOnWorldEdit(this::applyWorldEdit);
     }
 
     public SimulationView getView(){
@@ -53,15 +57,19 @@ public class SimulationController {
     }
 
     private void toggleSimulation(){
-        if (engine.getStatus() == SimulationStatus.RUNNING) {
+        if(engine.getStatus() == SimulationStatus.RUNNING){
             engine.pause();
             timeline.stop();
-        }else{
-            if(engine.getStatus() == SimulationStatus.IDLE || engine.getStatus() == SimulationStatus.STOPPED){
+        }else {
+            if(engine.getStatus() == SimulationStatus.IDLE){
+                if (engine.getWorld().getNestIndex() == null) {
+                    return;
+                }
+                engine.setAgentCount(requestedAntCount);
                 engine.start();
-            }else{
-                engine.resume();
-            }
+        } else {
+            engine.resume();
+        }
             timeline.play();
         }
         render();
@@ -79,13 +87,35 @@ public class SimulationController {
     private void resetSimulation(){
         timeline.stop();
         engine.reset();
-        engine.setAgentCount(requestedAntCount);
         render();
     }
 
     private void setAntCount(final int count){
         requestedAntCount = count;
-        engine.setAgentCount(count);
+        if(engine.getWorld().getNestIndex() != null){
+            engine.setAgentCount(count);
+        }
+        render();
+    }
+
+    private void generateScenario(){
+        timeline.stop();
+        engine.generateScenario();
+        render();
+    }
+
+    private void applyWorldEdit(final WorldEdit edit){
+        if(engine.getStatus() == SimulationStatus.RUNNING){
+            return;
+        }
+        final World world = engine.getWorld();
+
+        switch(edit.tool()){
+            case NEST -> world.relocateNest(edit.cellIndex());
+            case FOOD -> world.placeFood(edit.cellIndex(), edit.foodAmount());
+            case OBSTACLE -> world.placeObstacle(edit.cellIndex());
+            case ERASER -> world.clearCell(edit.cellIndex());
+        }
         render();
     }
 }
