@@ -4,6 +4,7 @@ import it.unibo.antsim.agent.AcoDecisionEngine;
 import it.unibo.antsim.agent.AcoParameters;
 import it.unibo.antsim.agent.Ant;
 import it.unibo.antsim.agent.AntFactory;
+import it.unibo.antsim.agent.AntRole;
 import it.unibo.antsim.pheromone.Evaporation;
 import it.unibo.antsim.pheromone.PheromoneField;
 import it.unibo.antsim.pheromone.PheromoneMap;
@@ -35,7 +36,7 @@ public class SimulationStepTest {
 
     @Test
     void testStepAdvancesClockAndMoveAgents(){
-        Ant ant = new Ant(new WorldPosition(15.0, 15.0), 0.0, 2.0);
+        Ant ant = new Ant(new WorldPosition(15.0, 15.0), 0.0, 2.0, AntRole.FOLLOWER);
         engine.addAnt(ant);
         engine.start();
 
@@ -57,9 +58,9 @@ public class SimulationStepTest {
         pheromoneMap.deposit(cell, PheromoneField.PheromoneType.FOOD, 10.0);
         engine.start();
 
-        engine.step(2.0);   // 2 sec * 1.0 rate = 2.0 units per second
+        engine.step(2.0);
 
         double level = pheromoneMap.level(new WorldPosition(15, 15), PheromoneField.PheromoneType.FOOD);
-        assertEquals(8.0, level, 0.001);
+        assertEquals(10.0 * Math.exp(-2.0), level, 0.001);
     }
 }

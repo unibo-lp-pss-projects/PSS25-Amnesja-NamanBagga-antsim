@@ -31,7 +31,7 @@ class AcoDecisionEngineTest {
 
     @Test
     void testVerifyAcoDecisionEnginePrefersHighPheromones(){
-        Ant ant = new Ant(new WorldPosition(55.0, 55.0), 0.0, 1.0);
+        Ant ant = new Ant(new WorldPosition(55.0, 55.0), 0.0, 1.0, AntRole.FOLLOWER);
         ant.setState(AntState.WANDERING);
 
         pheromoneField.deposit(new CellIndex(4, 6), PheromoneField.PheromoneType.FOOD, 90.0);
@@ -49,7 +49,7 @@ class AcoDecisionEngineTest {
 
     @Test
     void testTurnStrenghtLimitsTheAngleChange(){
-        Ant ant = new Ant(new WorldPosition(55.0, 55.0), 0.0, 1.0);
+        Ant ant = new Ant(new WorldPosition(55.0, 55.0), 0.0, 1.0, AntRole.FOLLOWER);
         ant.setState(AntState.WANDERING);
 
         // Strong pheromone intensity on the left
@@ -63,5 +63,4 @@ class AcoDecisionEngineTest {
         assertEquals(params.turnStrength(), appliedTurn, 0.001, "The turn strength is not respected. Applied turn: "+appliedTurn);
     }
 }
-
 

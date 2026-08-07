@@ -21,7 +21,7 @@ class AntMovementTest {
 
     @Test
     void TestContinuosMovementInFreeSpace(){
-        Ant ant = new Ant(new WorldPosition(25.0, 25.0), 0.0, 2.0);
+        Ant ant = new Ant(new WorldPosition(25.0, 25.0), 0.0, 2.0, AntRole.FOLLOWER);
 
         // move 1 time tick
         ant.move(1.0, world);
@@ -37,7 +37,7 @@ class AntMovementTest {
         world.getGrid().setCellContent(new CellIndex(2, 3), new CellContent.Obstacle());
 
         // positioning the ant right in front of the obstacle
-        Ant ant = new Ant(new WorldPosition(29.0, 25.0), 0.0, 2.0);
+        Ant ant = new Ant(new WorldPosition(29.0, 25.0), 0.0, 2.0, AntRole.FOLLOWER);
 
         ant.move(1.0, world);
 

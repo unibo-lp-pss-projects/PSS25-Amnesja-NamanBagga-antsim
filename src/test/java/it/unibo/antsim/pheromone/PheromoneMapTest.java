@@ -49,18 +49,18 @@ class PheromoneMapTest {
     }
 
     @Test
-    void evaporationTrendsToZero(){
+    void evaporationFollowsExponentialDecay(){
         CellIndex index = new CellIndex(0, 0);
         pheromoneMap.deposit(index, PheromoneField.PheromoneType.HOME, 0.5);
 
         // first evaporation
         pheromoneMap.evaporate(1.0);
         double level1 = pheromoneMap.level(new WorldPosition(5.0, 5.0), PheromoneField.PheromoneType.HOME);
-        assertEquals(0.2, level1, 0.001);
+        assertEquals(0.5 * Math.exp(-DECAY_RATE), level1, 0.001);
 
         // second evaporation
         pheromoneMap.evaporate(1.0);
         double level2 = pheromoneMap.level(new WorldPosition(5.0, 5.0), PheromoneField.PheromoneType.HOME);
-        assertEquals(0.0, level2, "The evaporation is below zero!!!!");
+        assertEquals(0.5 * Math.exp(-2 * DECAY_RATE), level2, 0.001);
     }
 }

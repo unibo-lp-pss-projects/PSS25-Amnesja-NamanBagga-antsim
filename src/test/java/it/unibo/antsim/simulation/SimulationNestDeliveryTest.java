@@ -34,7 +34,7 @@ public class SimulationNestDeliveryTest {
     @Test
     void testNestDeliveryResetsAntStateAndIncrementFood(){
         world.relocateNest(new CellIndex(5, 5));
-        Ant ant = new Ant(new WorldPosition(55.0, 55.0), 0.0, 0.0);
+        Ant ant = new Ant(new WorldPosition(55.0, 55.0), 0.0, 0.0, AntRole.FOLLOWER);
         ant.pickFood();
 
         engine.addAnt(ant);
@@ -47,15 +47,15 @@ public class SimulationNestDeliveryTest {
     }
 
     @Test
-    void testShorterTripDepositMorePheromone(){
-        // Shorter trip
-        double shortTripPheromone = simulateDelivery(new CellIndex(5, 3), new WorldPosition(35.0, 55.0), 2, new CellIndex(5, 5));
-        double longTripPheromone = simulateDelivery(new CellIndex(5, 1), new WorldPosition(15.0, 55.0), 4, new CellIndex(5, 5));
+    void testReturningAntDepositsPheromoneAlongItsPath(){
+        PheromoneMap shortTripPheromones = simulateDelivery(new CellIndex(5, 3), new WorldPosition(35.0, 55.0), 2);
+        PheromoneMap longTripPheromones = simulateDelivery(new CellIndex(5, 1), new WorldPosition(15.0, 55.0), 4);
 
-        assertTrue(shortTripPheromone>longTripPheromone,"shorter trip should deposit more pheromone!");
+        assertEquals(6.0, totalFoodPheromone(shortTripPheromones), 0.001);
+        assertEquals(12.0, totalFoodPheromone(longTripPheromones), 0.001);
     }
 
-    private double simulateDelivery(CellIndex food, WorldPosition initalPos, int steps, CellIndex measureCell){
+    private PheromoneMap simulateDelivery(CellIndex food, WorldPosition initalPos, int steps){
         World world = new World(10, 10, 10.0, 10.0);
         world.relocateNest(new CellIndex(5, 5));
 
@@ -69,10 +69,7 @@ public class SimulationNestDeliveryTest {
         SimulationEngine engine = new SimulationEngine(world, pheromoneMap, moveRight, new AntFactory(1.0, new Random(42)),new WorldGenerator(new Random(42)),
                 new GenerationParameters(10, 10, 10.0, 10.0, 0.0, 0, 0, 10, 1));
 
-        double cellWidth = world.getWidth()/ world.getColumns();
-        double cellHeight = world.getHeight()/ world.getRows();
-        WorldPosition measurePos = new WorldPosition(measureCell.column()*cellWidth+cellWidth/2, measureCell.row()*cellHeight+cellHeight/2);
-        Ant ant = new Ant(initalPos, 0.0, 10.0);
+        Ant ant = new Ant(initalPos, 0.0, 10.0, AntRole.FOLLOWER);
         ant.pickFood();
         engine.addAnt(ant);
         engine.start();
@@ -80,8 +77,19 @@ public class SimulationNestDeliveryTest {
         for(int i=0; i<steps; i++){
             engine.step(1.0);
         }
-        System.out.println("POS=" + ant.getPosition() + " STATE=" + ant.getState() + " IS_NEST=" + world.isNestAt(ant.getPosition()));
-        System.out.println("NEST_INDEX=" + world.getNestIndex() + " CELL_CONTENT=" + world.getGrid().getCellAt(world.getNestIndex()).getCellContent());
-        return pheromoneMap.level(measurePos, PheromoneField.PheromoneType.FOOD);
+        return pheromoneMap;
+    }
+
+    private double totalFoodPheromone(PheromoneMap pheromoneMap){
+        double total = 0.0;
+        for(int row = 0; row < 10; row++){
+            for(int column = 0; column < 10; column++){
+                total += pheromoneMap.level(
+                        new WorldPosition(column * 10.0 + 5.0, row * 10.0 + 5.0),
+                        PheromoneField.PheromoneType.FOOD
+                );
+            }
+        }
+        return total;
     }
 }

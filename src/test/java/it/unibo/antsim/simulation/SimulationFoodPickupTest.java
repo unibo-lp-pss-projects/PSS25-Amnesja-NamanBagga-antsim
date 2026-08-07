@@ -4,6 +4,7 @@ import it.unibo.antsim.agent.AcoDecisionEngine;
 import it.unibo.antsim.agent.AcoParameters;
 import it.unibo.antsim.agent.Ant;
 import it.unibo.antsim.agent.AntFactory;
+import it.unibo.antsim.agent.AntRole;
 import it.unibo.antsim.pheromone.Evaporation;
 import it.unibo.antsim.pheromone.PheromoneMap;
 import it.unibo.antsim.world.CellContent;
@@ -37,9 +38,9 @@ public class SimulationFoodPickupTest {
         CellIndex foodCellIndex = new CellIndex(2, 2);
         world.getGrid().setCellContent(foodCellIndex, new CellContent.Food(5));
 
-        Ant one = new Ant(new WorldPosition(25.0, 25.0), 0.0, 0.0);
-        Ant two = new Ant(new WorldPosition(25.0, 25.0), 0.0, 0.0);
-        Ant three = new Ant(new WorldPosition(25.0, 25.0), 0.0, 0.0);
+        Ant one = new Ant(new WorldPosition(25.0, 25.0), 0.0, 0.0, AntRole.FOLLOWER);
+        Ant two = new Ant(new WorldPosition(25.0, 25.0), 0.0, 0.0, AntRole.FOLLOWER);
+        Ant three = new Ant(new WorldPosition(25.0, 25.0), 0.0, 0.0, AntRole.FOLLOWER);
 
         engine.addAnt(one);
         engine.addAnt(two);

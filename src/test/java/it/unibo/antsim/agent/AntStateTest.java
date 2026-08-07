@@ -11,7 +11,7 @@ public class AntStateTest {
 
     @BeforeEach
     void setUp(){
-        ant = new Ant(new WorldPosition(10.0, 10.0), 0.0, 2.0);
+        ant = new Ant(new WorldPosition(10.0, 10.0), 0.0, 2.0, AntRole.FOLLOWER);
     }
 
     @Test
