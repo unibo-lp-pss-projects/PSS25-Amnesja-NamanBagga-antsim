@@ -3,6 +3,7 @@ package it.unibo.antsim.world;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /*
 * Main aggregate of the world module that bridges the discrete grid an continuous sppace.
@@ -74,8 +75,8 @@ public class World {
     * This method converts a continous two dimensional coordinate into a corresponding cell index
     */
     public CellIndex convertToCellIndex(WorldPosition pos){
-        int row = (int) (pos.y() / cellHeight);
-        int col = (int) (pos.x() / cellWidth);
+        int row = (int) Math.floor(pos.y() / cellHeight);
+        int col = (int) Math.floor(pos.x() / cellWidth);
 
         // Clamp the values to ensure they are within the grid bounds
         row = Math.clamp(row, 0, grid.getRows() - 1);
@@ -114,11 +115,11 @@ public class World {
     * This method verify if a position in the world is blocked by an obstacle or if it's out of boundries
     */
     public boolean isBlockedAt(WorldPosition pos){
-        int col = (int) (pos.x() / cellWidth);
-        int row = (int) (pos.y() / cellHeight);
+        int col = (int) Math.floor(pos.x() / cellWidth);
+        int row = (int) Math.floor(pos.y() / cellHeight);
 
         // In case is out of boundries, it will be considered as blocked
-        if(row <= 0 || row >= grid.getRows() || col <= 0 || col >= grid.getColumns()){
+        if(row < 0 || row >= grid.getRows() || col < 0 || col >= grid.getColumns()){
             return true;
         }
 
@@ -176,5 +177,35 @@ public class World {
             }
         }
         return Optional.empty();
+    }
+
+    public void placeFood(CellIndex cellIndex, int amount){
+        if(!grid.isInside(cellIndex)){
+            throw new IndexOutOfBoundsException("Food position is outside the grid");
+        }
+        if(cellIndex.equals(nestindex)){
+            throw new IllegalStateException("You cannot place food on the nest");
+        }
+        grid.setCellContent(cellIndex, new CellContent.Food(amount));
+    }
+
+    public void placeObstacle(CellIndex cellIndex){
+        if(!grid.isInside(cellIndex)){
+            throw new IndexOutOfBoundsException("Obstacle position is outside the grid");
+        }
+        if(cellIndex.equals(nestindex)){
+            throw new IllegalStateException("You cannot place an obstacle on the nest");
+        }
+        grid.setCellContent(cellIndex, new CellContent.Obstacle());
+    }
+
+    public void clearCell(CellIndex cellIndex){
+        if(!grid.isInside(cellIndex)){
+            throw new IndexOutOfBoundsException("Cell position is outside the grid");
+        }
+        grid.setCellContent(cellIndex, new CellContent.Empty());
+        if(cellIndex.equals(nestindex)){
+            nestindex = null;
+        }
     }
 }

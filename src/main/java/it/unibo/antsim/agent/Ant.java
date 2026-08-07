@@ -1,9 +1,11 @@
 package it.unibo.antsim.agent;
 
+import it.unibo.antsim.world.CellIndex;
 import it.unibo.antsim.world.World;
 import it.unibo.antsim.world.WorldPosition;
 
 import java.util.Objects;
+import java.util.random.RandomGenerator;
 
 /*
  * This class is basically an ant in the simulation, whit continous coordinates and orientation
@@ -13,21 +15,28 @@ public class Ant {
     private double angle; // It rappresents the orientation in radiant
     private final double speed;
     private AntState state;
+    private final AntRole role;
     private boolean carryingFood;
+    private CellIndex prevCell = null;
+    private int stepsSinceLastDeposit = 0;
+    private static final int DEPOSIT_EVERY_N_STEPS = 3;
 
-    public Ant(WorldPosition initialPosition, double initialAngle, double speed) {
+    public Ant(WorldPosition initialPosition, double initialAngle, double speed, AntRole role) {
         this.position = Objects.requireNonNull(initialPosition, "Initial position cannot be null");
         this.angle = normalizeAngle(initialAngle);
         this.speed = speed;
         this.state = AntState.WANDERING;
+        this.role = Objects.requireNonNull(role, "Role can't be null");
         this.carryingFood = false;
     }
 
     // Getters
     public WorldPosition getPosition() { return position; }
+    public CellIndex getPrevCell() { return prevCell; }
     public double getAngle() { return angle; }
     public double getSpeed() { return speed; }
     public AntState getState() { return state; }
+    public AntRole getRole(){ return role; }
     public boolean isCarryingFood() { return carryingFood; }
 
     // Setters
@@ -49,7 +58,7 @@ public class Ant {
      */
     public void move(double tick, World world){
         Objects.requireNonNull(world);
-
+        this.prevCell = world.convertToCellIndex(this.position);
         // Movement calculation
         double dx = speed * Math.cos(angle) * tick;
         double dy = speed * Math.sin(angle) * tick;
@@ -59,8 +68,17 @@ public class Ant {
         if(!world.isBlockedAt(nextPos)){
             this.position = nextPos;
         }else{
-            // In case it's a collision, in poor words we do a u-turn
-            this.angle = normalizeAngle(this.angle + Math.PI + (Math.random() - 0.5));
+            // try loop instead of bounce
+            for(int i=0; i<8;i++){
+                double tryAngle = normalizeAngle(this.angle + Math.PI + (Math.random() - 0.5) * Math.PI);
+                double testX = position.x() + speed * tick * Math.cos(tryAngle);
+                double testY = position.y() + speed * tick * Math.sin(tryAngle);
+                if(!world.isBlockedAt(new WorldPosition(testX, testY))){
+                    this.angle = tryAngle;
+                    this.position = new WorldPosition(testX, testY);
+                    break;
+                }
+            }
         }
     }
 
@@ -73,6 +91,7 @@ public class Ant {
         }
         carryingFood = true;
         state = AntState.RETURNING_TO_NEST;
+        this.angle = normalizeAngle(this.angle + Math.PI); // Reverse direction
     }
 
     /**
@@ -84,6 +103,7 @@ public class Ant {
         }
         carryingFood = false;
         state = AntState.WANDERING;
+        this.angle = normalizeAngle(this.angle + Math.PI); // Reverse direction
     }
     // This method normalizes the angle to be in the range [0, 2π)
     private double normalizeAngle(double ang){

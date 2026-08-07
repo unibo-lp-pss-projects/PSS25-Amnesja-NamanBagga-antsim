@@ -1,0 +1,121 @@
+package it.unibo.antsim.controller;
+
+import it.unibo.antsim.pheromone.PheromoneField;
+import it.unibo.antsim.simulation.SimulationEngine;
+import it.unibo.antsim.simulation.SimulationStatus;
+import it.unibo.antsim.view.SimulationView;
+import it.unibo.antsim.view.WorldEdit;
+import it.unibo.antsim.world.World;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+
+import java.util.Objects;
+
+public class SimulationController {
+    private static final double BASE_TIME_STEP = 0.05;
+    private static final int FRAME_MILLIS = 33;
+
+    private final SimulationEngine engine;
+    private final PheromoneField pheromoneField;
+    private final SimulationView view;
+    private final Timeline timeline;
+
+    private double speedMultiplier = 1.0;
+    private int requestedAntCount;
+
+    public SimulationController(final SimulationEngine engine, final PheromoneField pheromoneField, final int initialAntCount){
+        this.engine = Objects.requireNonNull(engine);
+        this.pheromoneField = Objects.requireNonNull(pheromoneField);
+        this.requestedAntCount = initialAntCount;
+        this.view = new SimulationView(initialAntCount);
+        this.timeline = new Timeline(new KeyFrame(Duration.millis(FRAME_MILLIS), event -> tick()));
+        this.timeline.setCycleCount(Timeline.INDEFINITE);
+
+        view.setOnStartPause(this::toggleSimulation);
+        view.setOnReset(this::resetSimulation);
+        view.setOnAntCountChanged(this::setAntCount);
+        view.setOnSpeedChanged(value -> speedMultiplier = value);
+        view.setOnCanvasResized(this::render);
+        view.setOnGenerateWorld(this::generateScenario);
+        view.setOnWorldEdit(this::applyWorldEdit);
+    }
+
+    public SimulationView getView(){
+        return view;
+    }
+
+    public void render(){
+        view.render(
+                engine.getWorld(),
+                pheromoneField,
+                engine.getAnts(),
+                engine.getStats()
+        );
+
+        view.setRunning(engine.getStatus() == SimulationStatus.RUNNING);
+    }
+
+    private void toggleSimulation(){
+        if(engine.getStatus() == SimulationStatus.RUNNING){
+            engine.pause();
+            timeline.stop();
+        }else {
+            if(engine.getStatus() == SimulationStatus.IDLE){
+                if (engine.getWorld().getNestIndex() == null) {
+                    return;
+                }
+                engine.setAgentCount(requestedAntCount);
+                engine.start();
+        } else {
+            engine.resume();
+        }
+            timeline.play();
+        }
+        render();
+    }
+
+    private void tick(){
+        if(engine.getStatus() != SimulationStatus.RUNNING){
+            return;
+        }
+
+        engine.step(BASE_TIME_STEP * speedMultiplier);
+        render();
+    }
+
+    private void resetSimulation(){
+        timeline.stop();
+        engine.reset();
+        render();
+    }
+
+    private void setAntCount(final int count){
+        requestedAntCount = count;
+        if(engine.getWorld().getNestIndex() != null){
+            engine.setAgentCount(count);
+        }
+        render();
+    }
+
+    private void generateScenario(){
+        timeline.stop();
+        engine.generateScenario();
+        render();
+    }
+
+    private void applyWorldEdit(final WorldEdit edit){
+        if(engine.getStatus() == SimulationStatus.RUNNING){
+            return;
+        }
+        final World world = engine.getWorld();
+
+        switch(edit.tool()){
+            case NEST -> world.relocateNest(edit.cellIndex());
+            case FOOD -> world.placeFood(edit.cellIndex(), edit.foodAmount());
+            case OBSTACLE -> world.placeObstacle(edit.cellIndex());
+            case ERASER -> world.clearCell(edit.cellIndex());
+        }
+        render();
+    }
+}

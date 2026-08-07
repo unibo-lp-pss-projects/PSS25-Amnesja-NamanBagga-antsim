@@ -59,8 +59,8 @@ public class PheromoneMap implements PheromoneField {
 
     @Override
     public double level(WorldPosition pos, PheromoneType type){
-        double centerX = (pos.x()/cellHeight)-0.5;
-        double centerY = (pos.y()/cellWidth)-0.5;
+        double centerX = (pos.x()/cellWidth)-0.5;
+        double centerY = (pos.y()/cellHeight)-0.5;
 
         int c0 = (int) Math.floor(centerX);
         int r0 = (int) Math.floor(centerY);

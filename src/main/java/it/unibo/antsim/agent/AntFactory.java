@@ -12,6 +12,7 @@ import java.util.random.RandomGenerator;
 public class AntFactory {
     private final double defaultSpeed;
     private final RandomGenerator random;
+    private static final double EXPLORER_RATIO = 0.50;
 
     public AntFactory(double defaultSpeed, RandomGenerator random){
         if(defaultSpeed<=0){
@@ -26,7 +27,7 @@ public class AntFactory {
      * @param nestIndex         grid cell where nest is located
      * @param cellSizeX         width of a single cell in the grid
      * @param cellSizeY         height of a single cell in the grid
-     * @return a newly created ant positioned randomly inside the cell with a random angle
+     * @return                  a newly created ant positioned randomly inside the cell with a random angle
      */
     public Ant generateAntInNest(CellIndex nestIndex, double cellSizeX, double cellSizeY){
         if(cellSizeX<0 || cellSizeY<0){
@@ -47,6 +48,7 @@ public class AntFactory {
         // Randomly generates an orientation angle between 0 and 2pi
         double generateAngle = random.nextDouble() * 2 * Math.PI;
 
-        return new Ant(new WorldPosition(generateX, generateY), generateAngle, defaultSpeed);
+        AntRole role = random.nextDouble() < EXPLORER_RATIO ? AntRole.EXPLORER : AntRole.FOLLOWER;
+        return new Ant(new WorldPosition(generateX, generateY), generateAngle, defaultSpeed, role);
     }
 }

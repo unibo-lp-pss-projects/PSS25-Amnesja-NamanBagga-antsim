@@ -2,7 +2,7 @@ package it.unibo.antsim.pheromone;
 
 public record Evaporation(double decayRate) implements EvaporationModel {
     public Evaporation{
-        if(decayRate<0 || decayRate>1){
+        if(decayRate<0){
             throw new IllegalArgumentException("Decay rate must be between 0 and 1");
         }
     }
@@ -12,6 +12,6 @@ public record Evaporation(double decayRate) implements EvaporationModel {
         if(dt<0){
             throw new IllegalArgumentException("Time delta must be positive!");
         }
-        return Math.max(0.0, currentLevel - decayRate * dt);
+        return currentLevel * Math.exp(-decayRate * dt);
     }
 }
