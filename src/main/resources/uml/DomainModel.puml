@@ -7,172 +7,172 @@
 
     package "World" {
 
-    class World {
-        - grid: Grid
-        - cellWidth: double
-        - cellHeight: double
-        - nestIndex: CellIndex
-        --
-        + World(rows, columns, cellWidth, cellHeight)
-        + getRows(): int
-        + getColumns(): int
-        + getWidth(): double
-        + getHeight(): double
-        + getGrid(): Grid
-        + getNestIndex(): CellIndex
-        + relocateNest(newIndex: CellIndex): void
-        + convertToCellIndex(position: WorldPosition): CellIndex
-        + getWalkableNeighbors(index: CellIndex): List<CellIndex>
-        + isBlockedAt(position: WorldPosition): boolean
-        + isNestAt(position: WorldPosition): boolean
-        + isFoodAt(position: WorldPosition): boolean
-        + findFoodCellNear(position: WorldPosition): Optional<CellIndex>
-        + consumeFood(index: CellIndex): boolean
-        + placeFood(index: CellIndex, amount: int): void
-        + placeObstacle(index: CellIndex): void
-        + clearCell(index: CellIndex): void
-    }
+        class World {
+            - grid: Grid
+            - cellWidth: double
+            - cellHeight: double
+            - nestIndex: CellIndex
+            --
+            + World(rows, columns, cellWidth, cellHeight)
+            + getRows(): int
+            + getColumns(): int
+            + getWidth(): double
+            + getHeight(): double
+            + getGrid(): Grid
+            + getNestIndex(): CellIndex
+            + relocateNest(newIndex: CellIndex): void
+            + convertToCellIndex(position: WorldPosition): CellIndex
+            + getWalkableNeighbors(index: CellIndex): List<CellIndex>
+            + isBlockedAt(position: WorldPosition): boolean
+            + isNestAt(position: WorldPosition): boolean
+            + isFoodAt(position: WorldPosition): boolean
+            + findFoodCellNear(position: WorldPosition): Optional<CellIndex>
+            + consumeFood(index: CellIndex): boolean
+            + placeFood(index: CellIndex, amount: int): void
+            + placeObstacle(index: CellIndex): void
+            + clearCell(index: CellIndex): void
+        }
 
-    class Grid{
-        - rows: int
-        - columns: int
-        - cells: Cell[][]
-        --
-        + Grid(rows: int, columns: int)
-        + getRows(): int
-        + getColumns(): int
-        + isInside(index: CellIndex): boolean
-        + getCellAt(index: CellIndex): Cell
-        + setCellContent(index: CellIndex, content: CellContent): void
-    }
+        class Grid{
+            - rows: int
+            - columns: int
+            - cells: Cell[][]
+            --
+            + Grid(rows: int, columns: int)
+            + getRows(): int
+            + getColumns(): int
+            + isInside(index: CellIndex): boolean
+            + getCellAt(index: CellIndex): Cell
+            + setCellContent(index: CellIndex, content: CellContent): void
+        }
 
-    class Cell{
-        - content: CellContent
-        --
-        + Cell(content: CellContent)
-        + getCellContent(): CellContent
-        + setCellContent(content: CellContent): void
-        + consumeFood(amount: int): void
-    }
+        class Cell{
+            - content: CellContent
+            --
+            + Cell(content: CellContent)
+            + getCellContent(): CellContent
+            + setCellContent(content: CellContent): void
+            + consumeFood(amount: int): void
+        }
 
-    class CellIndex <<record>> {
-        + row: int
-        + column: int
-    }
+        class CellIndex <<record>> {
+            + row: int
+            + column: int
+        }
 
-    class WorldPosition <<record>> {
-        + x: double
-        + y: double
-        --
-        + distanceToAnotherPosition(other: WorldPosition): double
-        + add(x: double, y: double): WorldPosition
-    }
+        class WorldPosition <<record>> {
+            + x: double
+            + y: double
+            --
+            + distanceToAnotherPosition(other: WorldPosition): double
+            + add(x: double, y: double): WorldPosition
+        }
 
-    interface CellContent <<sealed>>
+        interface CellContent <<sealed>>
 
-    class Empty <<record>>
-    class Obstacle <<record>>
+        class Empty <<record>>
+        class Obstacle <<record>>
 
-    class Food <<record>> {
-        + quantity: int
-        --
-        + consume(amount: int): Food
-        + isEmpty(): boolean
-    }
+        class Food <<record>> {
+            + quantity: int
+            --
+            + consume(amount: int): Food
+            + isEmpty(): boolean
+        }
 
-    class Nest <<record>>
+        class Nest <<record>>
     }
 
     package "Ant agents"{
 
-    class Ant {
-        - position: WorldPosition
-        - angle: double
-        - speed: double
-        - state: AntState
-        - role: AntRole
-        - carryingFood: boolean
-        - prevCell: CellIndex
-        --
-        + Ant(position, angle, speed, role)
-        + getPosition(): WorldPosition
-        + getAngle(): double
-        + getSpeed(): double
-        + getState(): AntState
-        + getRole(): AntRole
-        + isCarryingFood(): boolean
-        + move(dt: double, world: World): void
-        + setAngle(angle: double): void
-        + setState(state: AntState): void
-        + pickFood(): void
-        + dropFood(): void
-    }
+        class Ant {
+            - position: WorldPosition
+            - angle: double
+            - speed: double
+            - state: AntState
+            - role: AntRole
+            - carryingFood: boolean
+            - prevCell: CellIndex
+            --
+            + Ant(position, angle, speed, role)
+            + getPosition(): WorldPosition
+            + getAngle(): double
+            + getSpeed(): double
+            + getState(): AntState
+            + getRole(): AntRole
+            + isCarryingFood(): boolean
+            + move(dt: double, world: World): void
+            + setAngle(angle: double): void
+            + setState(state: AntState): void
+            + pickFood(): void
+            + dropFood(): void
+        }
 
-    class AntGroup {
-        - ants: List<Ant>
-        --
-        + addAnt(ant: Ant): void
-        + getAnts(): List<Ant>
-        + size(): int
-        + clear(): void
-        + removeLast(): Ant
-        + update(dt, world, pheromones, engine): void
-    }
+        class AntGroup {
+            - ants: List<Ant>
+            --
+            + addAnt(ant: Ant): void
+            + getAnts(): List<Ant>
+            + size(): int
+            + clear(): void
+            + removeLast(): Ant
+            + update(dt, world, pheromones, engine): void
+        }
 
-    class AntFactory {
-        - defaultSpeed: double
-        - random: RandomGenerator
-        --
-        + generateAntInNest(nest, cellWidth, cellHeight): Ant
-    }
+        class AntFactory {
+            - defaultSpeed: double
+            - random: RandomGenerator
+            --
+            + generateAntInNest(nest, cellWidth, cellHeight): Ant
+        }
 
-    enum AntState {
-        WANDERING
-        RETURNING_TO_NEST
-    }
+        enum AntState {
+            WANDERING
+            RETURNING_TO_NEST
+        }
 
-    enum AntRole {
-        EXPLORER
-        FOLLOWER
-    }
+        enum AntRole {
+            EXPLORER
+            FOLLOWER
+        }
     }
 
     package "Pheromones" {
 
-    interface PheromoneField {
-        + level(position: WorldPosition, type: PheromoneType): double
-        + deposit(index: CellIndex, type: PheromoneType, intensity: double): void
-        + evaporate(dt: double): void
-        + clear(): void
-    }
+        interface PheromoneField {
+            + level(position: WorldPosition, type: PheromoneType): double
+            + deposit(index: CellIndex, type: PheromoneType, intensity: double): void
+            + evaporate(dt: double): void
+            + clear(): void
+        }
 
-    class PheromoneMap {
-        - rows: int
-        - cols: int
-        - foodPheromones: double[][]
-        - homePheromones: double[][]
-        - evaporationModel: EvaporationModel
-        --
-        + level(position, type): double
-        + deposit(index, type, intensity): void
-        + evaporate(dt): void
-        + clear(): void
-    }
+        class PheromoneMap {
+            - rows: int
+            - cols: int
+            - foodPheromones: double[][]
+            - homePheromones: double[][]
+            - evaporationModel: EvaporationModel
+            --
+            + level(position, type): double
+            + deposit(index, type, intensity): void
+            + evaporate(dt): void
+            + clear(): void
+        }
 
-    interface EvaporationModel {
-        + decay(currentLevel: double, dt: double): double
-    }
+        interface EvaporationModel {
+            + decay(currentLevel: double, dt: double): double
+        }
 
-    class Evaporation <<record>> {
-        + decayRate: double
-        --
-        + decay(currentLevel: double, dt: double): double
-    }
+        class Evaporation <<record>> {
+            + decayRate: double
+            --
+            + decay(currentLevel: double, dt: double): double
+        }
 
-    enum PheromoneType {
-        FOOD
-        HOME
-    }
+        enum PheromoneType {
+            FOOD
+            HOME
+        }
     }
 
     ' --- RELAZIONI "WORLD" ---
@@ -206,6 +206,11 @@
     PheromoneMap ..> CellIndex : deposito
     PheromoneMap ..> WorldPosition : lettura
 
+    ' --- RELAZIONI "PACKAGE" ---
+    Ant ..> World: interagisce
+    AntGroup ..> PheromoneField: interagisce
+
+    ' --- NOTE ---
     note right of World
     Coordinatore dell'ambiente.
 
