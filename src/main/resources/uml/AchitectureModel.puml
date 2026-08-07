@@ -6,8 +6,8 @@
     skinparam packageStyle rectangle
     skinparam shadowing false
     skinparam padding 8
-    skinparam nodesep 50
-    skinparam ranksep 50
+    skinparam nodesep 100
+    skinparam ranksep 100
 
     actor "Utente" as User
 
