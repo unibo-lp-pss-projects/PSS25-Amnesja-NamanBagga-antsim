@@ -2,7 +2,6 @@
 ## Email dei componenti del gruppo
 
 - **Naman Bagga** → naman.bagga@studio.unibo.it
-- **Salvatore Persico** → salvatore.persico4@studio.unibo.it
 
 ---
 
@@ -63,12 +62,6 @@ Il risultato atteso è un'applicazione eseguibile dotata di una semplice interfa
 
 ## Suddivisione del lavoro
 
-Il lavoro sarà suddiviso per componenti principali del sistema, garantendo che entrambi contribuiscano sia alla logica applicativa sia alla componente di visualizzazione, così da coprire in modo equilibrato tutti gli aspetti del progetto.
-
----
-
-### Salvatore Persico
-
 **Modellazione del dominio principale:**
 - definizione delle classi fondamentali (Ant ecc.)
 - progettazione delle strutture dati per la rappresentazione dello stato della simulazione
@@ -87,10 +80,6 @@ Il lavoro sarà suddiviso per componenti principali del sistema, garantendo che 
 - rendering dinamico delle formiche
 - visualizzazione dell’intensità dei feromoni
 - aggiornamento grafico coerente con lo stato della simulazione
-
----
-
-### Naman Bagga
 
 **Modellazione dell’ambiente simulato:**
 - gestione delle celle speciali (cibo, ostacoli, nido ecc.)
@@ -114,10 +103,9 @@ Il lavoro sarà suddiviso per componenti principali del sistema, garantendo che 
 
 ---
 
-## Parti condivise
+## Documentazione UML e architetturale
+I diagrammi UML sono consultabili nella cartella /docs del progetto.
 
-- Progettazione architetturale del sistema
-- Definizione delle interfacce tra i componenti
-- Testing, debugging e refactoring
-- Integrazione finale delle componenti
-- Redazione della relazione e documentazione del codice  
+- modello del dominio;
+- diagramma delle classi di design;
+- diagramma dei componenti architetturali;

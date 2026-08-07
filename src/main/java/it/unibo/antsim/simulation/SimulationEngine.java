@@ -196,8 +196,12 @@ public class SimulationEngine {
         double cellWidth = world.getWidth()/world.getColumns();
         double cellHeight = world.getHeight()/ world.getRows();
 
-        while(antGroup.size()<targetCount){
+        while(antGroup.size() < targetCount){
             antGroup.addAnt(antFactory.generateAntInNest(nestIndex, cellWidth, cellHeight));
+        }
+
+        while(antGroup.size() > targetCount){
+            antGroup.removeLast();
         }
     }
 }
