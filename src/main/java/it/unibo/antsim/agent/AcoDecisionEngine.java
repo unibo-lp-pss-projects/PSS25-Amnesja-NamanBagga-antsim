@@ -16,14 +16,28 @@ import java.util.random.RandomGenerator;
 public class AcoDecisionEngine implements DecisionEngine {
     private final AcoParameters params;
     private final RandomGenerator random;
-    private static final double EPSILON = 0.01;      // Small value to allow movement in empty fields
-    private static final double HOMING_WEIGHT = 1.5;
+    private final static double EPSILON = 0.01;      // Small value to allow movement in empty fields
+    private final static double HOMING_WEIGHT = 1.5;
 
+    /**
+     * Instantiates a new Aco decision engine.
+     *
+     * @param params the parameters
+     * @param random the random generator for tests
+     */
     public AcoDecisionEngine(AcoParameters params, RandomGenerator random) {
         this.params = Objects.requireNonNull(params, "ACO parameters cannot be null");
         this.random = Objects.requireNonNull(random, "Random generator cannot be null");
     }
 
+    /**
+     * Decides the next movement (heading angle) for an ant based on its current state
+     *
+     * @param ant                The ant who is making decision
+     * @param world              The world in which the ant is operating
+     * @param pheromoneField     The active pheromone field containing trails
+     * @return the calculated heading angle in radians
+     */
     @Override
     public double decideNextAngle(Ant ant, World world, PheromoneField pheromoneField){
         Objects.requireNonNull(ant, "Ant cannot be null");
@@ -64,10 +78,11 @@ public class AcoDecisionEngine implements DecisionEngine {
         for(int i=0; i<3; i++){
             double angle = candidates[i];
 
-            // Sensor position in space
+            // Calculates sensor position in world coordinates
             double sensorX = ant.getPosition().x() + params.sensorRange() * Math.cos(angle);
             double sensorY = ant.getPosition().y() + params.sensorRange() * Math.sin(angle);
             WorldPosition pos = new WorldPosition(sensorX, sensorY);
+
             // Avoid choosing directions that lead straight into obstacles
             if(world.isBlockedAt(pos)){
                 weights[i] = 0.0;
@@ -91,12 +106,14 @@ public class AcoDecisionEngine implements DecisionEngine {
             }
             totalweight += weights[i];
         }
+
         // If all paths are blocked or the weight is zero, make a random choice to avoid deadlock
         if(totalweight <= 0.0){
             double targetAngle = currentAngle + (random.nextDouble() - 0.5) * params.randomFactor();
             return applyTurnStrength(currentAngle, targetAngle);
         }
 
+        // Exploration trigger
         if(random.nextDouble() < explorationProb){
             for(int attempt=0; attempt<candidates.length; attempt++){
                 int candidate = random.nextInt(candidates.length);
@@ -123,6 +140,12 @@ public class AcoDecisionEngine implements DecisionEngine {
         return currentAngle;
     }
 
+    /**
+     * this method is used for a natural and controlled turning movement
+     * @param currentAngle the current orientation of an ant
+     * @param targetAngle the desired target orientation in radians
+     * @return the new angle in radians after applying maximum turn limit
+     */
     private double applyTurnStrength(double currentAngle, double targetAngle){
         double difference = Math.atan2(Math.sin(targetAngle - currentAngle), Math.cos(targetAngle - currentAngle));
         double limitedDifference = Math.clamp(difference, -params.turnStrength(), params.turnStrength());

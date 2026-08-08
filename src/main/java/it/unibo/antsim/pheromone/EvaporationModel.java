@@ -1,8 +1,15 @@
 package it.unibo.antsim.pheromone;
-/*
-* This interface is basically a strategy for pheromone evaporation
-*/
+
+/**
+ * The interface Evaporation model.
+ */
 public interface EvaporationModel {
-    // It calculates the new level of pheromones based on the current level
+    /**
+     * It calculates the new level of pheromones based on the current level.
+     *
+     * @param currentLevel the current level
+     * @param dt           the dt
+     * @return the double
+     */
     double decay(double currentLevel, double dt);
 }
