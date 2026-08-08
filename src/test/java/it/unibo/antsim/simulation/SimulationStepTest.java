@@ -15,37 +15,54 @@ import it.unibo.antsim.world.generation.GenerationParameters;
 import it.unibo.antsim.world.generation.WorldGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.util.Random;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-public class SimulationStepTest {
+class SimulationStepTest {
     private SimulationEngine engine;
     private PheromoneMap pheromoneMap;
 
     @BeforeEach
-    void setUp(){
-        World world = new World(10, 10, 10.0, 10.0);
+    void setUp() {
+        final long seed = 42L;
+        final World world = new World(10, 10, 10.0, 10.0);
         pheromoneMap = new PheromoneMap(10, 10, 10.0, 10.0, 100.0, new Evaporation(1.0));
-        AcoParameters params = new AcoParameters(1.0, 1.0, 5.0, Math.PI/4, 0.0, 1.0);
-        AcoDecisionEngine decisionEngine = new AcoDecisionEngine(params, new Random(42));
-        engine = new SimulationEngine(world, pheromoneMap, decisionEngine, new AntFactory(1.0, new Random(42)),new WorldGenerator(new Random(42)),
-                new GenerationParameters(10, 10, 10.0, 10.0, 0.0, 0, 0, 10, 1));
+        final AcoParameters params = new AcoParameters(1.0, 1.0, 5.0, Math.PI / 4, 0.0, 1.0);
+        final AcoDecisionEngine decisionEngine = new AcoDecisionEngine(params, new Random(seed));
+        engine = new SimulationEngine(
+                world,
+                pheromoneMap,
+                decisionEngine,
+                new AntFactory(1.0, new Random(seed)),
+                new WorldGenerator(new Random(seed)),
+                new GenerationParameters(
+                        10,
+                        10,
+                        10.0,
+                        10.0,
+                        0.0,
+                        0,
+                        0,
+                        10,
+                        1
+                )
+        );
     }
 
     @Test
-    void testStepAdvancesClockAndMoveAgents(){
-        Ant ant = new Ant(new WorldPosition(15.0, 15.0), 0.0, 2.0, AntRole.FOLLOWER);
+    void testStepAdvancesClockAndMoveAgents() {
+        final Ant ant = new Ant(new WorldPosition(15.0, 15.0), 0.0, 2.0, AntRole.FOLLOWER);
         engine.addAnt(ant);
         engine.start();
 
-        WorldPosition initialPos = ant.getPosition();
+        final WorldPosition initialPos = ant.getPosition();
         engine.step(1.0);
 
         // Verify clock ticked
         assertEquals(1, engine.getClock().getCurrentStep());
-        assertEquals(1.0, engine.getClock().getTotalTime(), 0.001);
+        assertEquals(1.0, engine.getClock().getTotalTime());
 
         // Verify ant moved forward
         assertNotEquals(initialPos, ant.getPosition());
@@ -53,14 +70,15 @@ public class SimulationStepTest {
     }
 
     @Test
-    void testStepTriggersPheromoneEvaporation(){
-        CellIndex cell = new CellIndex(1, 1);
+    void testStepTriggersPheromoneEvaporation() {
+        final CellIndex cell = new CellIndex(1, 1);
         pheromoneMap.deposit(cell, PheromoneField.PheromoneType.FOOD, 10.0);
         engine.start();
 
         engine.step(2.0);
 
-        double level = pheromoneMap.level(new WorldPosition(15, 15), PheromoneField.PheromoneType.FOOD);
-        assertEquals(10.0 * Math.exp(-2.0), level, 0.001);
+        final double level = pheromoneMap.level(new WorldPosition(15, 15), PheromoneField.PheromoneType.FOOD);
+        final double expRate = -2.0;
+        assertEquals(10.0 * Math.exp(expRate), level);
     }
 }

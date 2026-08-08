@@ -10,34 +10,39 @@ import it.unibo.antsim.world.generation.GenerationParameters;
 import it.unibo.antsim.world.generation.WorldGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.util.Random;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-public class SimulationAgentCountTest {
+class SimulationAgentCountTest {
     private World world;
     private SimulationEngine engine;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         world = new World(10, 10, 10.0, 10.0);
-        world.relocateNest(new CellIndex(5, 5));
+        final int r = 5;
+        final int c = 5;
+        final long seed = 42L;
 
-        PheromoneMap pheromoneMap = new PheromoneMap(10, 10, 10.0, 10.0, 100.0, new Evaporation(0.0));
+        world.relocateNest(new CellIndex(r, c));
 
-        DecisionEngine keepDirection = (ant, world1, pheromoneField) -> ant.getAngle();
-        AntFactory antFactory = new AntFactory(1.0, new Random(42));
+        final PheromoneMap pheromoneMap = new PheromoneMap(10, 10, 10.0, 10.0, 100.0, new Evaporation(0.0));
 
-        engine = new SimulationEngine(world, pheromoneMap, keepDirection, antFactory, new WorldGenerator(new Random(42)),
+        final DecisionEngine keepDirection = (ant, world1, pheromoneField) -> ant.getAngle();
+        final AntFactory antFactory = new AntFactory(1.0, new Random(seed));
+
+        engine = new SimulationEngine(world, pheromoneMap, keepDirection, antFactory, new WorldGenerator(new Random(seed)),
                 new GenerationParameters(10, 10, 10.0, 10.0, 0.0, 0, 0, 10, 1));
     }
 
     @Test
-    void setAgentCountCreatesAndRemovesAnts(){
-        engine.setAgentCount(5);
+    void setAgentCountCreatesAndRemovesAnts() {
+        final int agentCount = 5;
+        engine.setAgentCount(agentCount);
 
-        assertEquals(5, engine.getAnts().size());
+        assertEquals(agentCount, engine.getAnts().size());
         assertTrue(engine.getAnts().stream().allMatch(ant -> world.isNestAt(ant.getPosition())));
 
         engine.setAgentCount(2);
@@ -45,7 +50,7 @@ public class SimulationAgentCountTest {
     }
 
     @Test
-    void setAgentCountRejectsNegativeValues(){
+    void setAgentCountRejectsNegativeValues() {
         assertThrows(IllegalArgumentException.class, () -> engine.setAgentCount(-1));
     }
 }

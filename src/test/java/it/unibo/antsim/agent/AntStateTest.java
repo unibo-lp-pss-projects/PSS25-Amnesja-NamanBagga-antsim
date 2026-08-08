@@ -3,24 +3,26 @@ package it.unibo.antsim.agent;
 import it.unibo.antsim.world.WorldPosition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-public class AntStateTest {
+class AntStateTest {
     private Ant ant;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         ant = new Ant(new WorldPosition(10.0, 10.0), 0.0, 2.0, AntRole.FOLLOWER);
     }
 
     @Test
-    void testInitialStateIsWandering(){
+    void testInitialStateIsWandering() {
         assertEquals(AntState.WANDERING, ant.getState(), "Initial state should be WANDERING");
     }
 
     @Test
-    void testTransitionPickAndDrop(){
+    void testTransitionPickAndDrop() {
         // pick up food: state = RETURING_TO_NEST
         ant.pickFood();
         assertEquals(AntState.RETURNING_TO_NEST, ant.getState(), "State should be RETURNING_TO_NEST after picking up food");
@@ -33,7 +35,7 @@ public class AntStateTest {
     }
 
     @Test
-    void testInvalidTransitionThrowException(){
+    void testInvalidTransitionThrowException() {
         // can't drop the food is not carrying it (state = WANDERING)
         assertThrows(IllegalStateException.class, ant::dropFood);
 

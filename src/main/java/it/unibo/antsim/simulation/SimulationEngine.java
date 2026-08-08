@@ -1,5 +1,6 @@
 package it.unibo.antsim.simulation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unibo.antsim.agent.AntGroup;
 import it.unibo.antsim.agent.DecisionEngine;
 import it.unibo.antsim.agent.AntFactory;
@@ -41,6 +42,10 @@ public class SimulationEngine {
      * @param worldGenerator the world generator for scenario creation
      * @param generationParameters the generation parameters for world generation
      */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP2",
+            justification = "the engine intentionally own the world and pheromone field of the simulation."
+    )
     public SimulationEngine(
             final World world,
             final PheromoneField pheromoneField,
@@ -192,6 +197,10 @@ public class SimulationEngine {
      *
      * @return the world instance
      */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP",
+            justification = "Controller and view need access to simulation world."
+    )
     public World getWorld() {
         return world;
     }

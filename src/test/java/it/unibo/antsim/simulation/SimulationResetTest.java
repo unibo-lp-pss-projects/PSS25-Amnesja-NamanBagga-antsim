@@ -18,28 +18,48 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
-public class SimulationResetTest {
+class SimulationResetTest {
     private SimulationEngine engine;
     private PheromoneMap pheromoneMap;
 
     @BeforeEach
-    void setUp(){
-        GenerationParameters params = new GenerationParameters(10, 10, 10.0, 10.0, 0.0, 0, 0, 10, 1);
-        WorldGenerator worldGen = new WorldGenerator(new Random(42));
-        World world = worldGen.generate(params);
+    void setUp() {
+        final GenerationParameters params = new GenerationParameters(
+                10,
+                10,
+                10.0,
+                10.0,
+                0.0,
+                0,
+                0,
+                10,
+                1
+        );
+        final WorldGenerator worldGen = new WorldGenerator(new Random(42));
+        final World world = worldGen.generate(params);
         pheromoneMap = new PheromoneMap(10, 10, 10.0, 10.0, 100.0, new Evaporation(0.0));
-        DecisionEngine keepDirection = (ant, testWorld, pheromoneField) -> ant.getAngle();
-        engine = new SimulationEngine(world, pheromoneMap,keepDirection, new AntFactory(1.0, new Random(42)), worldGen, params);
+        final DecisionEngine keepDirection = (ant, testWorld, pheromoneField) -> ant.getAngle();
+        final long seed = 42L;
+        engine = new SimulationEngine(world,
+                pheromoneMap,
+                keepDirection,
+                new AntFactory(1.0, new Random(seed)),
+                worldGen,
+                params
+        );
     }
 
     @Test
-    void resetRegeneratesWorldAndClearsSimulationState(){
-        World prevWorld = engine.getWorld();
-        CellIndex nest = prevWorld.getNestIndex();
+    void resetRegeneratesWorldAndClearsSimulationState() {
+        final World prevWorld = engine.getWorld();
+        final CellIndex nest = prevWorld.getNestIndex();
+        final double intensity = 50.0;
+        final int agentCount = 5;
+        final double x = 55.0;
+        final double y = 55.0;
+        pheromoneMap.deposit(nest, PheromoneField.PheromoneType.FOOD, intensity);
 
-        pheromoneMap.deposit(nest, PheromoneField.PheromoneType.FOOD, 50.0);
-
-        engine.setAgentCount(5);
+        engine.setAgentCount(agentCount);
         engine.start();
         engine.step(1.0);
 
@@ -53,6 +73,6 @@ public class SimulationResetTest {
 
         assertNotSame(prevWorld, engine.getWorld());
 
-        assertEquals(0.0, pheromoneMap.level(new WorldPosition(55.0, 55.0), PheromoneField.PheromoneType.FOOD));
+        assertEquals(0.0, pheromoneMap.level(new WorldPosition(x, y), PheromoneField.PheromoneType.FOOD));
     }
 }

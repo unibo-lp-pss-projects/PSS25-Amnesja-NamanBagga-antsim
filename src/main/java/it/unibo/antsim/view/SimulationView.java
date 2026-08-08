@@ -1,5 +1,6 @@
 package it.unibo.antsim.view;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unibo.antsim.agent.Ant;
 import it.unibo.antsim.agent.AntRole;
 import it.unibo.antsim.agent.AntState;
@@ -45,7 +46,6 @@ public class SimulationView extends BorderPane {
 
     private static final double HALF_DIVISOR = 2.0;
     private static final double CENTER_OFFSET = 0.5;
-    private static final double FOOD_SIZE = 0.50;
     private static final double FOOD_OFFSET = 0.15;
     private static final double NEST_SIZE = 0.70;
     private static final double NEST_OFFSET = 0.15;
@@ -222,6 +222,10 @@ public class SimulationView extends BorderPane {
      * @param ants the active ants list
      * @param statistics simulation statistics
      */
+    @SuppressFBWarnings(
+        value = "EI_EXPOSE_REP2",
+            justification = "The view retains the world reference ti handle rendering and the user editing."
+    )
     public void render(final World world,
                        final PheromoneField pheromoneField,
                        final List<Ant> ants,

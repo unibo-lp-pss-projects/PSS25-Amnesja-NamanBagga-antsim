@@ -39,6 +39,7 @@ public class AcoDecisionEngine implements DecisionEngine {
      * @return the calculated heading angle in radians
      */
     @Override
+    @SuppressWarnings("PMD.ForLoopCanBeForeach")
     public double decideNextAngle(final Ant ant, final World world, final PheromoneField pheromoneField) {
         Objects.requireNonNull(ant, "Ant cannot be null");
         Objects.requireNonNull(world, "World cannot be null");

@@ -11,7 +11,8 @@ public class SimulationClock {
      * Instantiates a new Simulation clock.
      */
     public SimulationClock() {
-        reset();
+        this.currentStep = 0;
+        this.totalTime = 0.0;
     }
 
     /**

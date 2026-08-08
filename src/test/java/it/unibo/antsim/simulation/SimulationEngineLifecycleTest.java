@@ -16,30 +16,44 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class SimulationEngineLifecycleTest {
+class SimulationEngineLifecycleTest {
     private SimulationEngine engine;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
+        final long seed = 42L;
+        final double decayRate = 0.3;
+        final double sensorRange = 5.0;
+
         engine = new SimulationEngine(
                 new World(10, 10, 10.0, 10.0),
-                new PheromoneMap(10, 10, 10.0, 10.0, 100.0, new Evaporation(0.3)),
+                new PheromoneMap(10, 10, 10.0, 10.0, 100.0, new Evaporation(decayRate)),
                 new AcoDecisionEngine(
-                        new AcoParameters(1.0, 1.0, 5.0, Math.PI/4, 0.0, 1.0),
-                        new Random(42)
+                        new AcoParameters(1.0, 1.0, sensorRange, Math.PI / 4, 0.0, 1.0),
+                        new Random(seed)
                 ),
-                new AntFactory(1.0, new Random(42)),
-                new WorldGenerator(new Random(42)),
-                new GenerationParameters(10, 10, 10.0, 10.0, 0.0, 0, 0, 10, 1));
+                new AntFactory(1.0, new Random(seed)),
+                new WorldGenerator(new Random(seed)),
+                new GenerationParameters(10,
+                        10,
+                        10.0,
+                        10.0,
+                        0.0,
+                        0,
+                        0,
+                        10,
+                        1
+                )
+        );
     }
 
     @Test
-    void testInitialStateIsIdle(){
+    void testInitialStateIsIdle() {
         assertEquals(SimulationStatus.IDLE, engine.getStatus());
     }
 
     @Test
-    void testValidLifecycleTrainsitions(){
+    void testValidLifecycleTransitions() {
         engine.start();
         assertEquals(SimulationStatus.RUNNING, engine.getStatus());
 
@@ -54,7 +68,7 @@ public class SimulationEngineLifecycleTest {
     }
 
     @Test
-    void testInvalidTrainsitionThrowException(){
+    void testInvalidTransitionThrowException() {
         // Cannot pause while IDLE
         assertThrows(IllegalStateException.class, engine::pause);
 

@@ -1,5 +1,6 @@
 package it.unibo.antsim.controller;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import it.unibo.antsim.pheromone.PheromoneField;
 import it.unibo.antsim.simulation.SimulationEngine;
 import it.unibo.antsim.simulation.SimulationStatus;
@@ -15,7 +16,7 @@ import java.util.Objects;
 /**
  * Simulation controller that manage user interaction and rendering.
  */
-public class SimulationController {
+public final class SimulationController {
     private static final double BASE_TIME_STEP = 0.05;
     private static final int FRAME_MILLIS = 33;
 
@@ -34,6 +35,10 @@ public class SimulationController {
      * @param pheromoneField  the pheromone field
      * @param initialAntCount the initial ant count
      */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP2",
+            justification = "The controller coordinates the simulation engine and pheromone field."
+    )
     public SimulationController(final SimulationEngine engine, final PheromoneField pheromoneField, final int initialAntCount) {
         this.engine = Objects.requireNonNull(engine);
         this.pheromoneField = Objects.requireNonNull(pheromoneField);
@@ -56,6 +61,10 @@ public class SimulationController {
      *
      * @return the simulation view
      */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP",
+            justification = "JavaFX instance is needed to display the simulation."
+    )
     public SimulationView getView() {
         return view;
     }

@@ -3,6 +3,7 @@ package it.unibo.antsim.pheromone;
 /**
  * The interface Evaporation model.
  */
+@FunctionalInterface
 public interface EvaporationModel {
     /**
      * It calculates the new level of pheromones based on the current level.

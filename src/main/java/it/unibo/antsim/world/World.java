@@ -1,5 +1,7 @@
 package it.unibo.antsim.world;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -74,6 +76,10 @@ public class World {
      *
      * @return the grid instance
      */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP",
+            justification = "The mutable grid is intentionally exposed to allow rendering."
+    )
     public Grid getGrid() {
         return this.grid;
     }

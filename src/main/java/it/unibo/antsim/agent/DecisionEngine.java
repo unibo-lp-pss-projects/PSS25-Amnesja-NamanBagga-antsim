@@ -7,6 +7,7 @@ import it.unibo.antsim.world.World;
  * This interface represents the decision-making mechanism for ants.
  * It calculates the future heading direction based on environmental stimuli.
  */
+@FunctionalInterface
 public interface DecisionEngine {
     /**
      * Computes the optimal direction for the ant based on its current state, obstacles and the active pheromone fields.
