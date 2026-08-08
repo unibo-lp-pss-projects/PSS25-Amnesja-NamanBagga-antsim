@@ -1,6 +1,10 @@
 package it.unibo.antsim.world;
 
-/*
-* Rappresents an discrete index (row, column) inside the grid of the environment*/
+/**
+ * The type Cell index.
+ *
+ * @param row row position of the cell
+ * @param column column position of the cell
+ */
 public record CellIndex(int row, int column) {
 }

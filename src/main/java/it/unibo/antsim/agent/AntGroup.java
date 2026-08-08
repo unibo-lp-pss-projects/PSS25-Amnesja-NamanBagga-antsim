@@ -1,63 +1,65 @@
 package it.unibo.antsim.agent;
 
-import it.unibo.antsim.pheromone.PheromoneField;
-import it.unibo.antsim.world.World;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.NoSuchElementException;
 
 /**
- * This class manages a collection of ants, coordinating their decision and movement
+ * This class manages a collection of ants, coordinating their decision and movement.
  */
 public class AntGroup {
     private final List<Ant> ants;
 
-    // Creates an empty ant group
+    /**
+     * Instantiates a new Ant group.
+     */
     public AntGroup() {
         this.ants = new ArrayList<>();
     }
 
-    // Adds an ant in the group
-    public void addAnt(Ant ant){
+    /**
+     * Add ant in the group.
+     *
+     * @param ant the ant to add
+     */
+    public void addAnt(final Ant ant) {
         this.ants.add(Objects.requireNonNull(ant));
     }
 
-    // Returns an unmodifiable list of ants in the group
+    /**
+     * Get the list of ants.
+     *
+     * @return an unmodifiable list of ants in the group
+     */
     public List<Ant> getAnts() {
         return Collections.unmodifiableList(ants);
     }
 
-    public int size(){
+    /**
+     * Get the number od ants in the group.
+     *
+     * @return the total number of ants
+     */
+    public int size() {
         return ants.size();
     }
 
-    public void clear(){
+    /**
+     * This one clear the list by removing all ants in the group.
+     */
+    public void clear() {
         ants.clear();
     }
 
-    public Ant removeLast(){
-        if(ants.isEmpty()){
+    /**
+     * Removes the last element added to the group.
+     */
+    public void removeLast() {
+        if (ants.isEmpty()) {
             throw new NoSuchElementException("Cannot remove from an empty group");
         }
-        return ants.remove(ants.size() - 1);
-    }
-    /**
-     * This method updates all ants in the group by executing their decisiona and movement
-     * @param dt                                Time delta for the physics update step
-     * @param world                             The world in which the ants are operating
-     * @param pheromoneField                    The active pheromone field containing trails
-     * @param engine                            The decision engine used by the ants to determine their next heading
-     */
-    public void update(double dt, World world, PheromoneField pheromoneField, DecisionEngine engine){
-        Objects.requireNonNull(world, "World cannot be null");
-        Objects.requireNonNull(pheromoneField, "PheromoneField cannot be null");
-        Objects.requireNonNull(engine, "DecisionEngine cannot be null");
-
-        for(Ant ant: ants){
-            // Brain decides the new heading
-            double nextAngle = engine.decideNextAngle(ant, world, pheromoneField);
-            ant.setAngle(nextAngle);
-            // Ant moves in the world
-            ant.move(dt, world);
-        }
+        ants.removeLast();
     }
 }

@@ -1,22 +1,31 @@
 package it.unibo.antsim.world;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
-/*
-* Main aggregate of the world module that bridges the discrete grid an continuous sppace.
-* Manages the lifecycle of the nest and spatial interaction between cells
-*/
+/**
+ * Main aggregate of the world module that bridges the discrete grid an continuous sppace.
+ * Manages the lifecycle of the nest and spatial interaction between cells
+ */
 public class World {
     private final Grid grid;
     private final double cellWidth;
     private final double cellHeight;
     private CellIndex nestindex;
 
-    public World(int rows, int cols, double cellWidth, double cellHeight){
-        if(cellWidth <= 0 || cellHeight <= 0){
+    /**
+     * Instantiates a new World.
+     *
+     * @param rows the rows
+     * @param cols the cols
+     * @param cellWidth the cell width
+     * @param cellHeight the cell height
+     */
+    public World(final int rows, final int cols, final double cellWidth, final double cellHeight) {
+        if (cellWidth <= 0 || cellHeight <= 0) {
             throw new IllegalArgumentException("Cell dimensions must be positive");
         }
 
@@ -26,44 +35,76 @@ public class World {
         this.nestindex = null; // The nest will be positioned after
     }
 
-    // Getters
-    public int getRows(){
+    /**
+     * Gets the total number of row in grid.
+     *
+     * @return row count
+     */
+    public int getRows() {
         return grid.getRows();
     }
 
-    public int getColumns(){
+    /**
+     * Gets the total number of column in grid.
+     *
+     * @return the column count
+     */
+    public int getColumns() {
         return grid.getColumns();
     }
 
-    public double getWidth(){
+    /**
+     * Gets the width of the world.
+     *
+     * @return the width
+     */
+    public double getWidth() {
         return grid.getColumns() * cellWidth;
     }
 
-    public double getHeight(){
+    /**
+     * Gets the height of the world.
+     *
+     * @return the height
+     */
+    public double getHeight() {
         return grid.getRows() * cellHeight;
     }
 
-    public Grid getGrid(){
+    /**
+     * Gets the discrete grid.
+     *
+     * @return the grid instance
+     */
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP",
+            justification = "The mutable grid is intentionally exposed to allow rendering."
+    )
+    public Grid getGrid() {
         return this.grid;
     }
 
     /**
      * Returns the index of the nest in the grid.
+     *
+     * @return the current nest index
      */
-    public CellIndex getNestIndex(){
+    public CellIndex getNestIndex() {
         return this.nestindex;
     }
 
-    /*
-    * This method recolates the nest after deleting the previous one by making it Empty
-    * and sets the new nest position in the world
-    */
-    public void relocateNest(CellIndex newIndex){
-        if(!grid.isInside(newIndex)){
+    /**
+     * Relocates nest after clearing the prev nest cell ant it sets
+     * onto a new position.
+     *
+     * @param newIndex new nest cell index
+     */
+    public void relocateNest(final CellIndex newIndex) {
+        if (!grid.isInside(newIndex)) {
             throw new IndexOutOfBoundsException("Nest index is outside the grid");
         }
 
-        if(this.nestindex != null){
+        if (this.nestindex != null) {
             // Remove the old nest
             grid.setCellContent(this.nestindex, new CellContent.Empty());
         }
@@ -71,10 +112,13 @@ public class World {
         grid.setCellContent(newIndex, new CellContent.Nest());
     }
 
-    /*
-    * This method converts a continous two dimensional coordinate into a corresponding cell index
-    */
-    public CellIndex convertToCellIndex(WorldPosition pos){
+    /**
+     * Converts continuous world coordinates into a corresponding cell.
+     *
+     * @param pos world position
+     * @return cell index
+     */
+    public CellIndex convertToCellIndex(final WorldPosition pos) {
         int row = (int) Math.floor(pos.y() / cellHeight);
         int col = (int) Math.floor(pos.x() / cellWidth);
 
@@ -85,24 +129,27 @@ public class World {
         return new CellIndex(row, col);
     }
 
-    /*
-    * This method calculates the neighbors cells index which aren't obstacles
-    */
-    public List<CellIndex> getWalkableNeighbors(CellIndex index){
-        List<CellIndex> neighbors = new ArrayList<>();
-        if(!grid.isInside(index)){
+    /**
+     * Calculates valid neighbors cell that are not blocked by obstacles.
+     *
+     * @param index target cell indexs
+     * @return a list of adjacent cells
+     */
+    public List<CellIndex> getWalkableNeighbors(final CellIndex index) {
+        final List<CellIndex> neighbors = new ArrayList<>();
+        if (!grid.isInside(index)) {
             return neighbors;
         }
 
-        for(int dRow=-1; dRow<=1; dRow++){
-            for(int dCol=-1; dCol<=1; dCol++){
-                if(dRow == 0 && dCol == 0){
+        for (int dRow = -1; dRow <= 1; dRow++) {
+            for (int dCol = -1; dCol <= 1; dCol++) {
+                if (dRow == 0 && dCol == 0) {
                     continue; // Skip the current cell
                 }
-                CellIndex neighborIndex = new CellIndex(index.row() + dRow, index.column() + dCol);
-                if(grid.isInside(neighborIndex)){
-                    CellContent content = grid.getCellAt(neighborIndex).getCellContent();
-                    if(!(content instanceof CellContent.Obstacle)){
+                final CellIndex neighborIndex = new CellIndex(index.row() + dRow, index.column() + dCol);
+                if (grid.isInside(neighborIndex)) {
+                    final CellContent content = grid.getCellAt(neighborIndex).getCellContent();
+                    if (!(content instanceof CellContent.Obstacle)) {
                         neighbors.add(neighborIndex);
                     }
                 }
@@ -111,67 +158,87 @@ public class World {
         return neighbors;
     }
 
-    /*
-    * This method verify if a position in the world is blocked by an obstacle or if it's out of boundries
-    */
-    public boolean isBlockedAt(WorldPosition pos){
-        int col = (int) Math.floor(pos.x() / cellWidth);
-        int row = (int) Math.floor(pos.y() / cellHeight);
+    /**
+     * Verifies is a given position is blocked by an obstacle or world boundaries.
+     *
+     * @param pos the world position
+     * @return true if blocked or out of bounds
+     */
+    public boolean isBlockedAt(final WorldPosition pos) {
+        final int col = (int) Math.floor(pos.x() / cellWidth);
+        final int row = (int) Math.floor(pos.y() / cellHeight);
 
         // In case is out of boundries, it will be considered as blocked
-        if(row < 0 || row >= grid.getRows() || col < 0 || col >= grid.getColumns()){
+        if (row < 0 || row >= grid.getRows() || col < 0 || col >= grid.getColumns()) {
             return true;
         }
 
         return grid.getCellAt(new CellIndex(row, col)).getCellContent() instanceof CellContent.Obstacle;
     }
 
-    /*
-    * This method verify if there is food at a given position in the world
-    */
-    public boolean isFoodAt(WorldPosition pos){
-        CellIndex index = convertToCellIndex(pos);
+    /**
+     * Verifies if food is at a specified world position.
+     *
+     * @param pos world position
+     * @return true if the cell contains food
+     */
+    public boolean isFoodAt(final WorldPosition pos) {
+        final CellIndex index = convertToCellIndex(pos);
         return grid.getCellAt(index).getCellContent() instanceof CellContent.Food;
     }
 
-    public boolean consumeFood(CellIndex index){
-        if(!grid.isInside(index)){
+    /**
+     * Consumes one unit of food from a target index.
+     *
+     * @param index cell index containing food
+     * @return trie if food was consumed
+     */
+    public boolean consumeFood(final CellIndex index) {
+        if (!grid.isInside(index)) {
             return false;
         }
-        Cell cell = grid.getCellAt(index);
-        if(cell.getCellContent() instanceof CellContent.Food food && food.quantity()>0){
+        final Cell cell = grid.getCellAt(index);
+        if (cell.getCellContent() instanceof CellContent.Food food && food.quantity() > 0) {
             cell.consumeFood(1);
             return true;
         }
         return false;
     }
-    /*
-    * This method verify if there is a nest at a given position in the world
-    */
-    public boolean isNestAt(WorldPosition pos){
-        CellIndex index = convertToCellIndex(pos);
+
+    /**
+     * Verifies if the nest is at a specified world position.
+     *
+     * @param pos the world position
+     * @return true if cell contains nest
+     */
+    public boolean isNestAt(final WorldPosition pos) {
+        final CellIndex index = convertToCellIndex(pos);
         return grid.getCellAt(index).getCellContent() instanceof CellContent.Nest;
     }
 
-    /*
-    * This method searches a cell that contains food near the position in the world.
-    * Check the first cell of that pos, and if there isn't food it checks the other 8*/
-    public Optional<CellIndex> findFoodCellNear(WorldPosition pos){
-        CellIndex center = convertToCellIndex(pos);
+    /**
+     * Searches for cell containing food near a coordinate.
+     * First it search in the cell and only then on the surrounding area.
+     *
+     * @param pos worls position
+     * @return an optional containing the near food cell
+     */
+    public Optional<CellIndex> findFoodCellNear(final WorldPosition pos) {
+        final CellIndex center = convertToCellIndex(pos);
 
         // Check the cell where is the agent
-        if(grid.isInside(center) && grid.getCellAt(center).getCellContent() instanceof CellContent.Food){
+        if (grid.isInside(center) && grid.getCellAt(center).getCellContent() instanceof CellContent.Food) {
             return Optional.of(center);
         }
 
         // Check the neighbors (radius = 1):
-        for(int dRow=-1; dRow<=1; dRow++){
-            for(int dCol=-1; dCol<=1; dCol++){
-                if(dRow == 0 && dCol == 0){
+        for (int dRow = -1; dRow <= 1; dRow++) {
+            for (int dCol = -1; dCol <= 1; dCol++) {
+                if (dRow == 0 && dCol == 0) {
                     continue; // Skip the current cell
                 }
-                CellIndex neighborIndex = new CellIndex(center.row() + dRow, center.column() + dCol);
-                if(grid.isInside(neighborIndex) && grid.getCellAt(neighborIndex).getCellContent() instanceof CellContent.Food){
+                final CellIndex neighborIndex = new CellIndex(center.row() + dRow, center.column() + dCol);
+                if (grid.isInside(neighborIndex) && grid.getCellAt(neighborIndex).getCellContent() instanceof CellContent.Food) {
                     return Optional.of(neighborIndex);
                 }
             }
@@ -179,32 +246,48 @@ public class World {
         return Optional.empty();
     }
 
-    public void placeFood(CellIndex cellIndex, int amount){
-        if(!grid.isInside(cellIndex)){
+    /**
+     * Places food at a specifies cell index.
+     *
+     * @param cellIndex tarhet cell index
+     * @param amount amout to place
+     */
+    public void placeFood(final CellIndex cellIndex, final int amount) {
+        if (!grid.isInside(cellIndex)) {
             throw new IndexOutOfBoundsException("Food position is outside the grid");
         }
-        if(cellIndex.equals(nestindex)){
+        if (cellIndex.equals(nestindex)) {
             throw new IllegalStateException("You cannot place food on the nest");
         }
         grid.setCellContent(cellIndex, new CellContent.Food(amount));
     }
 
-    public void placeObstacle(CellIndex cellIndex){
-        if(!grid.isInside(cellIndex)){
+    /**
+     * Places obstacle at a specified cell index.
+     *
+     * @param cellIndex target cell index
+     */
+    public void placeObstacle(final CellIndex cellIndex) {
+        if (!grid.isInside(cellIndex)) {
             throw new IndexOutOfBoundsException("Obstacle position is outside the grid");
         }
-        if(cellIndex.equals(nestindex)){
+        if (cellIndex.equals(nestindex)) {
             throw new IllegalStateException("You cannot place an obstacle on the nest");
         }
         grid.setCellContent(cellIndex, new CellContent.Obstacle());
     }
 
-    public void clearCell(CellIndex cellIndex){
-        if(!grid.isInside(cellIndex)){
+    /**
+     * Clear the content od a cell.
+     *
+     * @param cellIndex target cell
+     */
+    public void clearCell(final CellIndex cellIndex) {
+        if (!grid.isInside(cellIndex)) {
             throw new IndexOutOfBoundsException("Cell position is outside the grid");
         }
         grid.setCellContent(cellIndex, new CellContent.Empty());
-        if(cellIndex.equals(nestindex)){
+        if (cellIndex.equals(nestindex)) {
             nestindex = null;
         }
     }
