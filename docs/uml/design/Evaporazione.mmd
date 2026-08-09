@@ -1,0 +1,24 @@
+classDiagram
+
+    class PheromoneMap{
+        -foodPheromones: double[][]
+        -foodPheromones: double[][]
+        -evaporationModel: EvaporationModel
+        +evaporate(dt: double)
+        +level(pos, type) double
+        +deposit(index, type, intensity)
+    }
+
+    class EvaporationModel{
+        <<interface>>
+        +decay(currentLevel: double, dt: double) double
+    }
+
+    class Evaporation{
+        <<record>>
+        +decayRate: double
+        +decay(currentLevel: double, dt: double) double
+    }
+
+    PheromoneMap --> EvaporationModel : usa (per costruttore)
+    Evaporation --|> EvaporationModel : implementa

@@ -1,0 +1,33 @@
+classDiagram
+
+    class SimulationEngine{
+        -decisionEngine: DecisionEngine
+        +step(dt: double)
+    }
+
+    class DecisionEngine{
+        <<interface>>
+        +decideNextAngle(ant, world, pheromoneField) double
+    }
+
+    class AcoDecisionEngine{
+        -params: AcoParameters
+        -random: RandomGenerator
+        +decideNextAngle(ant, world, pheromoneField) double
+        -applyTurnStrength(currentAngle, targetAngle) double
+    }
+
+    class AcoParameters{
+        <<record>>
+        +alpha: double
+        +beta: double
+        +sensorRange: double
+        +sensorAngle: double
+        +randomFactor: double
+        +turnStrength: double
+    }
+
+    SimulationEngine --> DecisionEngine : usa (per costruttore)
+    AcoDecisionEngine ..|> DecisionEngine : implementa
+    AcoDecisionEngine --> AcoParameters : configurato da
+

@@ -1,0 +1,67 @@
+flowchart TB
+    subgraph ViewLayer["View"]
+        View["SimulationView (JavaFX)"]
+        Editor["EditorToll | WorldEdit"]
+    end
+    subgraph ControllerLayer["Controller"]
+        Controller["SimulationController"]
+        Timeline["JavaFX Timeline"]
+    end
+    subgraph SimulationPackage["simulation"]
+        Engine["SimulationEngine"]
+        Clock["SimulationClock"]
+        Stats["SimulationStatistics"]
+    end
+    subgraph AgentPackage["agent"]
+        Agents["Ant / AntGroup / AntFactory"]
+        DecisionEngine{{"DecisionEngine"}}
+        Aco["AcoDecisionEngine"]
+        AcoParams["AcoParameters"]
+    end
+    subgraph WorldPackage["world"]
+        World["World / Grid / Cell / CellContent"]
+        Generator["WorldGenerator"]
+        GenParams["GenerationParameters"]
+    end
+    subgraph PheromonePackage["pheromone"]
+        PheromoneField{{"PheromoneField"}}
+        PheromoneMap["PheromoneMap"]
+        EvaporationModel{{"EvaporationModel"}}
+        Evaporation["Evaporation"]
+    end
+    subgraph DomainLayer["Domain"]
+        SimulationPackage
+        AgentPackage
+        WorldPackage
+        PheromonePackage
+    end
+    User(["utente"]) --> View
+    View --> Editor
+    View -- Callback --> Controller
+    Timeline -- Tick 33ms --> Controller
+    Controller -- step --> Engine
+    Engine -. aggiorna .-> Agents
+    Engine -- raccolta o consegna cibo --> World
+    Engine -- deposito o evaporazione --> PheromoneField
+    Engine -. genera .-> Generator
+    Agents -- calcola direzione --> DecisionEngine
+    Aco -. implementa .-> DecisionEngine
+    Aco --> AcoParams
+    Agents -. movimento o collisioni .-> World
+    Agents -. percepire .-> PheromoneField
+    PheromoneMap -. implementa .-> PheromoneField
+    PheromoneMap --> EvaporationModel
+    Evaporation -. implementa .-> EvaporationModel
+    Generator --> GenParams
+    Generator -. crea .-> World
+    Main["Main"] -. configura .-> Controller
+    Main -. inietta le dipendenze .-> Engine
+    Main -. crea .-> PheromoneMap & AcoParams & Generator
+
+    style SimulationPackage fill:transparent
+    style AgentPackage fill:transparent
+    style WorldPackage fill:transparent
+    style PheromonePackage fill:transparent
+    style DomainLayer fill:transparent
+    style ControllerLayer fill:transparent
+    style ViewLayer fill:transparent

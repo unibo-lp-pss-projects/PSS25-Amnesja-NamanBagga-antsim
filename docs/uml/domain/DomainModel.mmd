@@ -1,0 +1,66 @@
+classDiagram
+    direction TB
+    class world {
+        Contiene una griglia di celle e un nido
+    }
+
+    class Cell {
+        occupa posizione nella griglia
+    }
+
+    class Ant {
+        posizione continua nel world
+        orientamento
+        velocità
+        trasporto cibo
+    }
+
+    class CellContent {
+    }
+
+    class Empty {
+        cella vuota
+    }
+
+    class Obstacle {
+        cella ostacolo
+    }
+
+    class Food {
+        quantità cibo
+    }
+
+    class Nest {
+        cella nido
+    }
+
+    class AntState {
+        WANDERING
+        RETURNING_TO_NEST
+    }
+
+    class Pheromone {
+        tipo: FOOD HOME
+        intensità
+        evaporazione
+    }
+
+    class AntRole {
+        EXPLORER
+        FOLLOWER
+    }
+
+    <<interface>> CellContent
+    <<enum>> AntState
+    <<enum>> AntRole
+
+    world "1" *-- "0..*" Cell : contiene
+    Cell "1" --|> "1" CellContent : dentro
+    CellContent <|.. Empty
+    CellContent <|.. Obstacle
+    CellContent <|.. Food
+    CellContent <|.. Nest
+    world "0..*" -- "0..*" Ant : ospita
+    Ant "1" --|> "1" AntRole : ruolo
+    Ant "1" --|> "1" AntState : stato
+    Ant "0..*" ..|> "0..*" Pheromone : deposito
