@@ -1,0 +1,18 @@
+flowchart TD
+    Start(["decideNextAngle(ant, world, pheromoneField)"])
+    CheckState{"ant.getState() ==\nRETURNING_TO_NEST"}
+
+    Start --> CheckState
+
+    CheckState --"no" --> TargetFood["target = PheromoneType.FOOD\nhomingAngle non viene calcolato"]
+    CheckState --"si" --> ComputeHoming["target = PheromoneType.HOME\nhomingAngle = Math.atan2(nestY - antY, nestX - antX)"]
+
+    TargetFood --> ForEachDir["per ciascuna direzione candidata:\ncalcola peso ACO"]
+    ComputeHoming --> ForEachDir2["per ciascuna direzione candidata:\ncalcola peso ACO"]
+
+    ForEachDir2 --> Alignment["alignment = cos(homingAngle - angoloDirezioneCandidata)"]
+    Alignment --> ApplyHoming["peso *= e^(HOMING_WEIGHT * alignment)\nHOMING_WEIGHT = 1.5"]
+
+    ForEachDir --> Roulette["selezione a roulette-wheel\nsui pesi calcolati"]
+    ApplyHoming --> Roulette
+    Roulette --> Result(["angolo scelto"])

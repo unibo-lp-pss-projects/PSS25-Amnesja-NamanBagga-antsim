@@ -1,0 +1,16 @@
+flowchart TB
+    subgraph Row0["riga 0"]
+        V00["v00\ncella (r0, c0)"]
+        V10["v10\ncella (r0, c0 + 1)"]
+    end
+    subgraph Row1["riga 1"]
+        V01["v01\ncella (r0 + 1, c0)"]
+        V11["v11\ncella (r0 + 1, c0 + 1)"]
+    end
+    V00 -- "peso (1 - a) * (1 -b)" --> P(["P\nposizione continua\n"])
+    V10 -- "peso a * (1- b)" --> P
+    V01 -- "peso (1 - a) * b" --> P
+    V11 -- "peso a * b" --> P
+
+    style Row0 fill:transparent
+    style Row1 fill:transparent

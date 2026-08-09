@@ -1,0 +1,19 @@
+flowchart LR
+
+    User(["utente clicca sul canvas"])
+    View["SimulationView\nconverte coordinate schermo -> coordinate mondo -> indice cella\ncostruisce WorldEdit(indice cella, tool, quanitità cibo)"]
+    Callback["setOnWorldEdit callback"]
+    Controller["SimulationController.applyWorldEdit(edit)\nse simulazione RUNNING: rifiuta\naltrimenti: switch su edit.tool()"]
+    World["World\nrecolateNest / placeFood \nplaceObstacle / clearCell"]
+    Render["render()\naggiorna la View"]
+
+    User --> View --> Callback --> Controller --> World --> Render --> View
+
+    subgraph DataTypes["tipi coinvolti"]
+        direction TB
+        EditorTool["<<enumeration>>\nEditorTool\nNEST, FOOD, OBSTACLE, ERASER"]
+        WorldEdit["<<record>>\nWorldEdit\ncellIndex: CellIndex\ntool: EditorTool\nfoodAmounr: int"]
+        WorldEdit --> EditorTool
+    end
+
+    View -.-> WorldEdit
