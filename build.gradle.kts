@@ -14,7 +14,12 @@ plugins {
      */
     id("com.gradleup.shadow") version "9.4.1"
     id("org.danilopianini.gradle-java-qa") version "1.178.0"
+
+    id("org.danilopianini.unibo-oop-gradle-plugin") version "2.0.28"
 }
+
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(21)) } }
+
 
 repositories {
     mavenCentral()
@@ -77,15 +82,27 @@ tasks.named<JavaExec>("run").configure {
     )
 }
 */
-
-
 plugins {
+    // Apply the java plugin to add support for Java
     java
+
+    // Apply the application plugin to add support for building a CLI application
+    // You can run your app via task "run": ./gradlew run
     application
+
+    /*
+     * Adds tasks to export a runnable jar.
+     * In order to create it, launch the "shadowJar" task.
+     * The runnable jar will be found in build/libs/projectname-all.jar
+     */
     id("com.gradleup.shadow") version "9.4.1"
     id("org.danilopianini.gradle-java-qa") version "1.178.0"
-    id("org.openjfx.javafxplugin") version "0.1.0"
+
+    id("org.danilopianini.unibo-oop-gradle-plugin") version "2.0.28"
 }
+
+java { toolchain { languageVersion.set(JavaLanguageVersion.of(21)) } }
+
 
 repositories {
     mavenCentral()

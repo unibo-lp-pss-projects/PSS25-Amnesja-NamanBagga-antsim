@@ -1,44 +1,200 @@
-name: CI
+name: CI/CD Process
 on:
-  push:
-    tags: '*'
-    branches-ignore:
-      - 'autodelivery**'
-      - 'bump-**'
-      - 'renovate/**'
-    paths-ignore:
-      - 'CHANGELOG.md'
-      - 'LICENSE'
-      - 'README.md'
-      - 'renovate.json'
-  pull_request:
+  workflow_call:
   workflow_dispatch:
 
 jobs:
+  branch:
+    runs-on: ubuntu-24.04
+    outputs:
+      is_default: ${{ steps.branch-name.outputs.is_default }}
+    steps:
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v9
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+       version_tag: ${{ steps.version.outputs.version_tag }}
+    steps:
+      - name: Checkout
+        uses: DanySK/action-checkout@0.2.31
+      - uses: paulhatch/semantic-version@v6.0.3
+        id: version
+        with:
+          tag_prefix: ""
+          major_pattern: '/\w+(\(\w+\))?\!:\s.+/'
+          minor_pattern: '/feat(\(\w+\))?:\s.+/'
+          version_format: "${major}.${minor}.${patch}-dev${increment}"
+          namespace: 'grading'
+          bump_each_commit: true
+          search_commit_body: false
+      - run: '[ -n "${{ steps.version.outputs.version_tag }}" ]'
   build:
-    if: contains(github.repository, 'sample-javafx-project') && !github.event.repository.fork
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - windows-2025
-          - macos-15
-          - ubuntu-24.04
-        jvm_version: [21, 25]
+        os: [ windows-2025, macos-15, ubuntu-24.04 ]
     runs-on: ${{ matrix.os }}
+    needs:
+      - version
+      - branch
     steps:
+      - name: Support longpaths
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+      - name: Trick Renovate
+        id: versions
+        shell: bash
+        run: |
+          USES=$(cat <<TRICK_RENOVATE
+          - uses: git-quick-stats/git-quick-stats@125eec713664aaadf9ba22185848a8db5ab986ca
+          TRICK_RENOVATE
+          )
+          export USES="$USES"
+          ruby -e 'ENV["USES"].lines.map { |line| /^\s*-\s+uses:\s+[^\s]+\/([^\s]+)@(.*)\s*$/.match(line) }.each { |match| puts "#{match[1]}=#{match[2]}" }' >> $GITHUB_OUTPUT
       - name: Checkout
-        uses: DanySK/action-checkout@0.2.30
-      - uses: DanySK/build-check-deploy-gradle-action@4.0.40
+        uses: DanySK/action-checkout@0.2.31
+      - name: Compute the git stats
+        env:
+          TERM: xterm
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          bash <(curl -s https://raw.githubusercontent.com/git-quick-stats/git-quick-stats/${{ steps.versions.outputs.git-quick-stats }}/git-quick-stats) -T > git-stats.txt
+      - uses: DanySK/build-check-deploy-gradle-action@4.0.43
         with:
-          java-version: ${{ matrix.jvm_version }}
+          build-command: ./gradlew blame
+          check-command: ./gradlew test blame || true
           should-run-codecov: false
           should-deploy: false
-          should-validate-wrapper: ${{ matrix.os == 'ubuntu' && matrix.jvm_version == '17' }}
+          java-version: 21
+      - name: Release
+        if: contains('Linux', runner.os) && needs.branch.outputs.is_default
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          tag: ${{ needs.version.outputs.version_tag }}
+          artifacts: "**/*blame*.md,git-stats.txt,scan-journal.log"
+          allowUpdates: true
+          replacesArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+  anti-plagiarism:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    needs:
+      - version
+      - branch
+    steps:
+      - name: Compute the version of the detector
+        id: version
+        shell: bash
+        run: |
+          USES=$(cat <<TRICK_RENOVATE
+          - uses: DanySK/code-plagiarism-detector@12.1.1
+          TRICK_RENOVATE
+          )
+          echo "Scripts update line: \"$USES\""
+          echo "Computed version: \"${USES#*@}\""
+          echo "version=${USES#*@}" >> $GITHUB_OUTPUT
+      - name: Download
+        run: curl -sL https://github.com/DanySK/code-plagiarism-detector/releases/download/${{ steps.version.outputs.version }}/code-plagiarism-detector-${{ steps.version.outputs.version }}-all.jar -o plagiarism.jar
+      - name: Run
+        env:
+          BB_USER: danysk
+          BB_TOKEN: ${{ secrets.BB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p plagiarism-report
+          java -jar plagiarism.jar --output-dir plagiarism-report \
+            submission \
+              --service github:${{ github.repository_owner }}/${{ github.event.repository.name }} \
+            corpus \
+              --service github:unibo-oop-projects,github:unibo-lp-pss-projects,github:AlmasB/FXGLGames,github:DanySK/libgdx-examples,github:aricci303/game-as-a-lab,github:pslab-unibo/oop-game,github:k3vonk/UCD-Cluedo
+      - name: Upload workflow artifact for validation
+        uses: actions/upload-artifact@v7
+        with:
+          name: anti-plagiarism-report
+          path: plagiarism-report/*
+          if-no-files-found: error
+      - name: Release
+        if: needs.branch.outputs.is_default
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          tag: ${{ needs.version.outputs.version_tag }}
+          artifacts: "plagiarism-report/*"
+          allowUpdates: true
+          replacesArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  validate-anti-plagiarism:
+    runs-on: ubuntu-24.04
+    needs:
+      - anti-plagiarism
+    steps:
+      - name: Download anti-plagiarism reports
+        uses: actions/download-artifact@v8
+        with:
+          name: anti-plagiarism-report
+          path: downloaded-plagiarism-report
+
+      - name: Validate report-* footer
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          matches=()
+          for f in downloaded-plagiarism-report/*; do
+            base="$(basename "$f")"
+            if [[ "$base" == report-* ]]; then
+              matches+=("$f")
+            fi
+          done
+          count=${#matches[@]}
+          if (( count == 0 )); then
+            echo "No report-* file found. Nothing to validate."
+            exit 0
+          fi
+          if (( count > 1 )); then
+            echo "Expected exactly one report-* file, found $count:" >&2
+            printf '  %s\n' "${matches[@]}" >&2
+            exit 1
+          fi
+          report="${matches[0]}"
+          echo "Validating $report"
+          mapfile -t footer < <(
+            tr -d '\r' < "$report" |
+            sed '/^[[:space:]]*$/d' |
+            tail -n 2
+          )
+          if (( ${#footer[@]} != 2 )); then
+            echo "Report must end with at least two non-blank lines." >&2
+            exit 1
+          fi
+          minus_line="${footer[0]}"
+          plus_line="${footer[1]}"
+          if [[ ! "$minus_line" =~ ^-{10,}$ ]]; then
+            echo "🚩Check the report!🚩" >&2
+            exit 1
+          fi
+          if [[ ! "$plus_line" =~ ^\+{10,}$ ]]; then
+            echo "🚩Check the report!🚩" >&2
+            exit 1
+          fi
+          if (( ${#minus_line} != ${#plus_line} )); then
+            echo "🚩Check the report!🚩" >&2
+            exit 1
+          fi
+          echo "No major red flags detected."
+
   success:
     runs-on: ubuntu-24.04
     needs:
       - build
+      - anti-plagiarism
+      - validate-anti-plagiarism
     if: >-
       always() && (
         contains(join(needs.*.result, ','), 'failure')
